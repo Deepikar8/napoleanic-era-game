@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Unit, Scenario } from '../../src/engine/types';
-import { moveUnit, attack, endTurn, beginBattle } from '../../src/engine/turn';
+import { moveUnit, attack, endTurn, beginBattle, changeFormation } from '../../src/engine/turn';
 
 const u = (over: Partial<Unit> & Pick<Unit, 'id' | 'side'>): Unit => ({
   type: 'line-infantry', position: { x: 0, y: 0 }, facing: 'N',
@@ -85,5 +85,15 @@ describe('turn manager', () => {
     expect(moved.units.find(u => u.id === 'fr1')!.hasMoved).toBe(true);
     const turn2 = endTurn(endTurn(moved).state).state;
     expect(turn2.units.find(u => u.id === 'fr1')!.hasMoved).toBeFalsy();
+  });
+
+  it('changeFormation changes formation and sets hasActed', () => {
+    const state = beginBattle(trivialScenario);
+    const r = changeFormation(state, 'fr1', 'square');
+    const unit = r.state.units.find(u => u.id === 'fr1')!;
+    expect(unit.formation).toBe('square');
+    expect(unit.hasActed).toBe(true);
+    expect(r.events).toContainEqual(expect.objectContaining({ kind: 'formation-changed', unitId: 'fr1' }));
+    expect(() => changeFormation(r.state, 'fr1', 'column')).toThrow(/Already acted/);
   });
 });

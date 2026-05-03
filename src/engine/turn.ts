@@ -5,7 +5,6 @@ import { posEq } from './types';
 import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { resolveAttack } from './combat';
-import { checkVictory } from './victory';
 
 const sideOrder: Side[] = ['french', 'austrian', 'russian'];
 
@@ -148,4 +147,4 @@ export function endTurn(state: GameState): { state: GameState; events: BattleEve
   };
 }
 
-export { checkVictory };
+export { checkVictory } from './victory';
