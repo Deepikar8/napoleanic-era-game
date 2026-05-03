@@ -82,7 +82,10 @@ function BattleScreen() {
       </div>
       <aside>
         <UnitPanel unit={selected} />
-        <AttackPreview attacker={selected} defender={hoveredEnemy} />
+        <AttackPreview
+          attacker={selected} defender={hoveredEnemy}
+          allUnits={state.units} tiles={scenario.tiles}
+        />
         <BattleLog events={state.log} />
         {v.kind === 'decided' && (
           <div className="bg-gilt text-ink p-3 rounded mt-3 text-sm">

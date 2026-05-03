@@ -17,6 +17,16 @@ const SIDE_TEXT: Record<Unit['side'], string> = {
   french: '#ffffff', austrian: '#2a2018', russian: '#ffffff',
 };
 
+function facingTriangle(f: 'N' | 'E' | 'S' | 'W', size: number): string {
+  const m = size / 2; const t = 4;
+  switch (f) {
+    case 'N': return `${m - t},0 ${m + t},0 ${m},${-t}`;
+    case 'E': return `${size},${m - t} ${size},${m + t} ${size + t},${m}`;
+    case 'S': return `${m - t},${size} ${m + t},${size} ${m},${size + t}`;
+    case 'W': return `0,${m - t} 0,${m + t} ${-t},${m}`;
+  }
+}
+
 export interface BattleBoardProps {
   scenario: Scenario;
   state: GameState;
@@ -119,6 +129,15 @@ export function BattleBoard(p: BattleBoardProps) {
                   fontSize="9" fontWeight="700" fill="#2a2018">
               {u.strength}
             </text>
+            {/* Formation glyph */}
+            <text x={4} y={cellSize - 12} fontSize="11" fontWeight="700" fill={SIDE_TEXT[u.side]}>
+              {u.formation === 'line' ? '—' : u.formation === 'column' ? '⋮' : '▢'}
+            </text>
+            {/* Facing triangle on the front edge */}
+            <polygon
+              points={facingTriangle(u.facing, cellSize - 8)}
+              fill={SIDE_TEXT[u.side]} opacity={0.7}
+            />
           </g>
         );
       })}

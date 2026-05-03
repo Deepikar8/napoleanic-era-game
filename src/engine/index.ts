@@ -5,3 +5,4 @@ export * from './combat';
 export * from './victory';
 export * from './turn';
 export * from './patch';
+export * from './preview';
