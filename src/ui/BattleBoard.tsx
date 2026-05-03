@@ -96,6 +96,7 @@ export function BattleBoard(p: BattleBoardProps) {
         const cy = u.position.y * cellSize;
         const isSelected = u.id === selectedUnitId;
         const isAttackable = enemySet.has(u.id);
+        const isSpent = canAct(u.side) && u.hasActed === true && u.hasMoved === true;
         const onClick = () => {
           if (!isAttackable) { p.onSelectUnit(u.id); return; }
           if (hoveredEnemyId === u.id) p.onAttack(u.id);
@@ -108,7 +109,7 @@ export function BattleBoard(p: BattleBoardProps) {
             onClick={onClick}
             onMouseEnter={() => !canAct(u.side) && p.onHoverEnemy(u.id)}
             onMouseLeave={() => p.onHoverEnemy(null)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', opacity: isSpent ? 0.45 : 1 }}
           >
             {isAttackable && (
               <rect width={cellSize - 8} height={cellSize - 8} rx="3"
