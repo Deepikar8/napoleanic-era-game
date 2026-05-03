@@ -70,13 +70,19 @@ export const austerlitz: Scenario = {
     co('austrian-arty','Austrian Artillery','austrian','foot-artillery', 9, 7, 2),
   ],
   victory: [
-    { for: 'french', kind: 'capture-tile', args: { pos: { x: 6, y: 5 } } },
-    { for: 'french', kind: 'capture-tile', args: { pos: { x: 7, y: 5 } } },
-    { for: 'french', kind: 'reduce-side-strength', args: { side: 'russian', threshold: 8 } },
+    // Primary path — take the Pratzen Heights and HOLD until turn 8.
+    // Doesn't fire as a one-shot capture; French must occupy the tile when
+    // the turn-8 check runs, which forces a staged "take then defend" play.
+    { for: 'french', kind: 'hold-tile-for-turns', args: { pos: { x: 6, y: 5 }, turns: 8 } },
+    // Alternative path — shatter the Russian army outright.
+    { for: 'french', kind: 'reduce-side-strength', args: { side: 'russian', threshold: 6 } },
+    // Coalition wins by surviving the full 12 turns.
     { for: 'austrian', kind: 'survive-turns', args: { turns: 12 } },
     { for: 'russian', kind: 'survive-turns', args: { turns: 12 } },
   ],
   turnLimit: 12,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '07-austerlitz-postbattle',
+  tacticalHint:
+    'Bait and counterstroke. The Pratzen Heights (6,5) are everything — take them by turn 8 AND have someone standing there at turn 8 to win. The Coalition will counter-attack to retake the heights, so don\'t just race a cavalryman in; bring infantry to dig in. Soult and Davout do the heavy lifting; the Imperial Guard is your reserve. Alternative: grind Russian strength below 6 if you can\'t hold the heights.',
 };

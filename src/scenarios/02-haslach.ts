@@ -64,4 +64,6 @@ export const haslach: Scenario = {
   ai: { generalRule: 'aggressive', triggers: [] },
   preBattleDecision: decision,
   postBattleDispatch: '02-haslach-postbattle',
+  tacticalHint:
+    'Desperate holdout. Werneck WILL come at you. You don\'t need to kill anyone — just keep Dupont alive for 8 turns. Form line for the firefight, square if cavalry threatens. Hold the centre with the battery; let the Austrians break themselves on it.',
 };

@@ -44,4 +44,6 @@ export const schongrabern: Scenario = {
   turnLimit: 10,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '06-schongrabern-postbattle',
+  tacticalHint:
+    'Delaying action. Bagration has been told to die in place — he won\'t move. You must eliminate him before turn 10. He\'s on the hill (+1 defence) and almost certainly Elite morale (probe early). Pin him with infantry, flank with Murat\'s heavy cavalry, and concentrate force (adjacent friendlies give +1 attack).',
 };

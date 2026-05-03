@@ -40,4 +40,6 @@ export const wertingen: Scenario = {
   turnLimit: 8,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '01-wertingen-postbattle',
+  tacticalHint:
+    'Cavalry battle. Murat\'s heavy cavalry hits hardest — charge isolated infantry not in square. Your light cavalry are fast (4 squares) but fragile; use them to wrap the Austrian flanks while Murat punches the centre. The Austrians will sit and wait — bring the fight to them before turn 8.',
 };

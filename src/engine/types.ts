@@ -106,6 +106,9 @@ export interface Scenario {
   ai: AiScript;
   preBattleDecision?: Decision;
   postBattleDispatch?: string; // filename under src/dispatches
+  /** Short tactical guidance shown on the dispatch screen, separate from the
+   *  in-character briefing prose. One or two sentences, plain language. */
+  tacticalHint?: string;
 }
 
 // Events emitted by every state-changing engine call. Cumulative array forms the replay log.

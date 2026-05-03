@@ -1,6 +1,14 @@
 import type { BattleEvent } from '../engine/types';
 import { Panel } from './shared';
 
+const moraleFlavour = (m: 1 | 2 | 3): string => {
+  switch (m) {
+    case 1: return '★ Conscripts — they falter at the first volley.';
+    case 2: return '★★ Veterans — they stand firm.';
+    case 3: return '★★★ Elite Guard — we will bleed for every yard.';
+  }
+};
+
 const formatEvent = (e: BattleEvent): string => {
   switch (e.kind) {
     case 'turn-started':       return `Turn ${e.turn} — ${e.side} to act`;
@@ -8,7 +16,7 @@ const formatEvent = (e: BattleEvent): string => {
     case 'unit-moved':         return `${e.unitId} moved to (${e.to.x},${e.to.y})`;
     case 'formation-changed':  return `${e.unitId}: ${e.from} → ${e.to}`;
     case 'attack-resolved':    return `Attack ${e.attackerId} → ${e.defenderId}: ${e.result} (${e.attackerScore} vs ${e.defenderScore})`;
-    case 'morale-revealed':    return `${e.unitId} morale revealed: ${'★'.repeat(e.morale)}`;
+    case 'morale-revealed':    return `${e.unitId}: ${moraleFlavour(e.morale)}`;
     case 'unit-eliminated':    return `${e.unitId} eliminated`;
     case 'unit-retreated':     return `${e.unitId} retreated`;
     case 'victory':            return `Victory: ${e.side} (${e.reason})`;

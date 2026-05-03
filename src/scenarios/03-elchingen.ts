@@ -44,4 +44,6 @@ export const elchingen: Scenario = {
   turnLimit: 8,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '03-elchingen-postbattle',
+  tacticalHint:
+    'Bridge assault. The Danube is impassable except at the bridge (5,3). Move your infantry in column to cross fast, then switch to line on the south bank for the firefight. The Austrian battery on the heights will hurt — knock it out early or take the village by attrition. Take the town tile (5,4) before turn 8.',
 };

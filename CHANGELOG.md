@@ -1,5 +1,28 @@
 # Changelog
 
+## v1.9.0 — 2026-05-03
+
+Design review pass — making each scenario teach a different Napoleonic lesson.
+
+### Added
+- **Tactical hint per scenario.** New `Scenario.tacticalHint` field (optional, plain language). Rendered in a "Tactical guidance" panel on the Dispatch screen, separate from the in-character briefing prose. Each hint names the lesson the scenario is *supposed* to teach:
+  - **Wertingen** — cavalry tutorial: charge isolated infantry, wrap flanks
+  - **Haslach** — desperate holdout: don't kill, just keep Dupont alive
+  - **Elchingen** — bridge assault: column to cross, line to fight
+  - **Ulm** — maneuver puzzle: race a cavalryman to the road, no fighting needed
+  - **Krems** — survival: keep Mortier alive, don't chase kills
+  - **Schöngrabern** — delaying action: pin and concentrate force on Bagration's hill
+  - **Austerlitz** — bait and counterstroke: take the heights AND hold them
+
+### Changed
+- **Austerlitz now requires holding the Pratzen Heights, not just touching them.** French primary victory was a one-shot `capture-tile (6,5)` — the kid could rush a cavalry unit, dismount on the hill, and win turn 4. Now `hold-tile-for-turns (6,5) until turn 8`, so they have to take the heights AND defend them while the Coalition counter-attacks. Alternative path (reduce Russian strength) preserved as backup. Engine already supported `hold-tile-for-turns`; we just weren't using it.
+- **Morale-reveal captions are dramatic, not numeric.** Was: `morale revealed: ★★`. Now (in the AI animation banner *and* the right-side BattleLog): "Veterans — they stand firm.", "Elite Guard — we will bleed for every yard.", "Conscripts — they falter at the first volley." Same data, with the in-character line that turns the math reveal into narrative.
+
+### Deferred (next design pass)
+- Scenario-unique mechanical twists beyond just objectives (#2 in the review) — needs new engine concepts.
+- Staged event triggers (Imperial Guard counterattack at Austerlitz mid-battle) — needs `scenarioTriggers` infrastructure separate from AI triggers.
+- Cross-battle decision consequences — needs persistent campaign-level state.
+
 ## v1.8.0 — 2026-05-03
 
 External code review pass — two real bugs, a refactor, and tooling.

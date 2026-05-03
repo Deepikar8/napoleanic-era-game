@@ -22,6 +22,11 @@ export function DispatchScreen() {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       </Panel>
+      {scenario.tacticalHint && (
+        <Panel title="Tactical guidance">
+          <p className="text-sm leading-relaxed">{scenario.tacticalHint}</p>
+        </Panel>
+      )}
       {decision && !decisionTaken && <DecisionPicker decision={decision} />}
       {(!decision || decisionTaken) && (
         <div className="mt-4 flex justify-end">

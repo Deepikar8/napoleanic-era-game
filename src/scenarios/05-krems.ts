@@ -54,4 +54,6 @@ export const krems: Scenario = {
   turnLimit: 8,
   ai: { generalRule: 'aggressive', triggers: [] },
   postBattleDispatch: '05-krems-postbattle',
+  tacticalHint:
+    'Survival mission. You\'re outnumbered six to ten and Kutuzov is coming for Mortier. You don\'t win by killing — you win by KEEPING MORTIER ALIVE for 8 turns. Stay tight, never let Mortier be flanked, form square if cavalry approaches. The Russians are aggressive — make them pay for every step.',
 };

@@ -45,4 +45,6 @@ export const ulm: Scenario = {
   turnLimit: 6,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '04-ulm-postbattle',
+  tacticalHint:
+    'Maneuver puzzle, not a slugfest. Mack will not attack — he\'s already negotiating surrender. You don\'t need to fight; you need to occupy the southern road tile (4, 6) within 6 turns. Use cavalry — they have the longest move (4 squares). Square is wasted here. Just race.',
 };

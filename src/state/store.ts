@@ -23,12 +23,20 @@ const playEventSound = (e: BattleEvent) => {
 const unitName = (id: string, units: { id: string; name?: string }[]): string =>
   units.find(u => u.id === id)?.name ?? id;
 
+const moraleFlavour = (m: 1 | 2 | 3): string => {
+  switch (m) {
+    case 1: return 'Conscripts! They falter at the first volley.';
+    case 2: return 'Veterans. They stand firm.';
+    case 3: return 'Elite Guard. We will bleed for every yard.';
+  }
+};
+
 const captionForEvent = (e: BattleEvent, units: { id: string; name?: string }[]): string | null => {
   switch (e.kind) {
     case 'unit-moved':        return `${unitName(e.unitId, units)} moved to (${e.to.x}, ${e.to.y})`;
     case 'formation-changed': return `${unitName(e.unitId, units)} formed ${e.to}`;
     case 'attack-resolved':   return `${unitName(e.attackerId, units)} attacks ${unitName(e.defenderId, units)} — ${e.result}`;
-    case 'morale-revealed':   return `${unitName(e.unitId, units)} morale: ${'★'.repeat(e.morale)}`;
+    case 'morale-revealed':   return `${unitName(e.unitId, units)}: ${moraleFlavour(e.morale)}`;
     case 'unit-eliminated':   return `${unitName(e.unitId, units)} eliminated`;
     case 'unit-retreated':    return `${unitName(e.unitId, units)} retreats`;
     case 'turn-started':
