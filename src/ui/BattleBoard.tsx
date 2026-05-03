@@ -32,6 +32,7 @@ export interface BattleBoardProps {
   state: GameState;
   selectedUnitId: string | null;
   hoveredEnemyId: string | null;
+  showDetails?: boolean;
   onSelectUnit: (id: string | null) => void;
   onMoveTo: (to: Pos) => void;
   onAttack: (defenderId: string) => void;
@@ -132,15 +133,19 @@ export function BattleBoard(p: BattleBoardProps) {
                   fontSize="9" fontWeight="700" fill="#2a2018">
               {u.strength}
             </text>
-            {/* Formation glyph */}
-            <text x={4} y={cellSize - 12} fontSize="11" fontWeight="700" fill={SIDE_TEXT[u.side]}>
-              {u.formation === 'line' ? '—' : u.formation === 'column' ? '⋮' : '▢'}
-            </text>
-            {/* Facing triangle on the front edge */}
-            <polygon
-              points={facingTriangle(u.facing, cellSize - 8)}
-              fill={SIDE_TEXT[u.side]} opacity={0.7}
-            />
+            {p.showDetails && (
+              <>
+                {/* Formation glyph */}
+                <text x={4} y={cellSize - 12} fontSize="11" fontWeight="700" fill={SIDE_TEXT[u.side]}>
+                  {u.formation === 'line' ? '—' : u.formation === 'column' ? '⋮' : '▢'}
+                </text>
+                {/* Facing triangle on the front edge */}
+                <polygon
+                  points={facingTriangle(u.facing, cellSize - 8)}
+                  fill={SIDE_TEXT[u.side]} opacity={0.7}
+                />
+              </>
+            )}
           </g>
         );
       })}

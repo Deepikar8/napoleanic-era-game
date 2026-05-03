@@ -21,6 +21,7 @@ interface Store {
   helpOpen: boolean;
   solo: boolean;
   muted: boolean;
+  showDetails: boolean;
   errorMessage: string | null;
 
   // Actions
@@ -39,6 +40,7 @@ interface Store {
   toggleHelp(): void;
   setSolo(b: boolean): void;
   setMuted(b: boolean): void;
+  toggleDetails(): void;
   flashError(msg: string): void;
   clearError(): void;
 }
@@ -49,6 +51,7 @@ export const useGame = create<Store>((set, get) => ({
   helpOpen: false,
   solo: false,
   muted: false,
+  showDetails: false,
   errorMessage: null,
 
   startNewRun(scenario) {
@@ -148,6 +151,7 @@ export const useGame = create<Store>((set, get) => ({
   toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
   setSolo(b) { set({ solo: b }); },
   setMuted(b) { soundSetMuted(b); set({ muted: b }); },
+  toggleDetails() { set(s => ({ showDetails: !s.showDetails })); },
   flashError(msg) {
     set({ errorMessage: msg });
     setTimeout(() => {

@@ -39,7 +39,7 @@ function BattleScreen() {
   const {
     state, scenario, selectedUnitId, hoveredEnemyId,
     selectUnit, hoverEnemy, doMove, doAttack, doFormation, doEndTurn, undo,
-    saveCurrent, toggleHelp,
+    saveCurrent, toggleHelp, showDetails, toggleDetails,
   } = useGame();
 
   useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
@@ -84,6 +84,7 @@ function BattleScreen() {
           state={state}
           selectedUnitId={selectedUnitId}
           hoveredEnemyId={hoveredEnemyId}
+          showDetails={showDetails}
           onSelectUnit={selectUnit}
           onMoveTo={doMove}
           onAttack={doAttack}
@@ -92,6 +93,7 @@ function BattleScreen() {
         <div className="mt-3 flex gap-2 items-center">
           <Button onClick={undo} kind="secondary">Undo</Button>
           <Button onClick={toggleHelp} kind="secondary">?</Button>
+          <Button onClick={toggleDetails} kind="secondary">{showDetails ? 'Hide details' : 'Show details'}</Button>
           <div className="flex-1" />
           {selected && (
             <>
