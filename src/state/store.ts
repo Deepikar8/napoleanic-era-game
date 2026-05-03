@@ -16,6 +16,7 @@ interface Store {
   screen: Screen;
   selectedUnitId: string | null;
   hoveredEnemyId: string | null;
+  helpOpen: boolean;
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -30,11 +31,13 @@ interface Store {
   undo(): void;
   saveCurrent(): void;
   advanceAfterBattle(): void;
+  toggleHelp(): void;
 }
 
 export const useGame = create<Store>((set, get) => ({
   runId: null, state: null, scenario: null, history: [],
   screen: 'splash', selectedUnitId: null, hoveredEnemyId: null,
+  helpOpen: false,
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -112,6 +115,8 @@ export const useGame = create<Store>((set, get) => ({
     if (!runId || !state) return;
     localStorageBackend.save({ runId, savedAt: Date.now(), state });
   },
+
+  toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
 
   advanceAfterBattle() {
     const { state, scenario, runId } = get();

@@ -5,6 +5,7 @@ import { CampaignMenu } from './ui/CampaignMenu';
 import { BattleEndScreen } from './ui/BattleEndScreen';
 import { ReplayViewer } from './ui/ReplayViewer';
 import { DispatchScreen } from './ui/DispatchScreen';
+import { HelpOverlay } from './ui/HelpOverlay';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
@@ -16,22 +17,24 @@ import { checkVictory } from './engine';
 export default function App() {
   const screen = useGame(s => s.screen);
 
+  let body;
   switch (screen) {
-    case 'splash':         return <Splash />;
-    case 'campaign-menu':  return <CampaignMenu />;
-    case 'battle':         return <BattleScreen />;
-    case 'battle-end':     return <BattleEndScreen />;
-    case 'replay':         return <ReplayViewer />;
-    case 'dispatch':       return <DispatchScreen />;
-    default:               return <Splash />;
+    case 'splash':         body = <Splash />; break;
+    case 'campaign-menu':  body = <CampaignMenu />; break;
+    case 'battle':         body = <BattleScreen />; break;
+    case 'battle-end':     body = <BattleEndScreen />; break;
+    case 'replay':         body = <ReplayViewer />; break;
+    case 'dispatch':       body = <DispatchScreen />; break;
+    default:               body = <Splash />;
   }
+  return (<>{body}<HelpOverlay /></>);
 }
 
 function BattleScreen() {
   const {
     state, scenario, selectedUnitId, hoveredEnemyId,
     selectUnit, hoverEnemy, doMove, doAttack, doFormation, doEndTurn, undo,
-    saveCurrent,
+    saveCurrent, toggleHelp,
   } = useGame();
 
   useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
@@ -65,6 +68,7 @@ function BattleScreen() {
         />
         <div className="mt-3 flex gap-2 items-center">
           <Button onClick={undo} kind="secondary">Undo</Button>
+          <Button onClick={toggleHelp} kind="secondary">?</Button>
           <div className="flex-1" />
           {selected && (
             <>
