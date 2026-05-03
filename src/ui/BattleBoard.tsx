@@ -39,7 +39,7 @@ export interface BattleBoardProps {
 }
 
 export function BattleBoard(p: BattleBoardProps) {
-  const { scenario, state, selectedUnitId } = p;
+  const { scenario, state, selectedUnitId, hoveredEnemyId } = p;
   const cellSize = 48;
   const w = scenario.grid.width * cellSize;
   const h = scenario.grid.height * cellSize;
@@ -65,6 +65,7 @@ export function BattleBoard(p: BattleBoardProps) {
   const enemySet = new Set(adjacentEnemies.map(u => u.id));
 
   return (
+    <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto bg-parchmentDark border border-ink/40">
       {/* Tiles */}
       {Array.from({ length: scenario.grid.height }, (_, y) =>
@@ -96,8 +97,9 @@ export function BattleBoard(p: BattleBoardProps) {
         const isSelected = u.id === selectedUnitId;
         const isAttackable = enemySet.has(u.id);
         const onClick = () => {
-          if (isAttackable) p.onAttack(u.id);
-          else p.onSelectUnit(u.id);
+          if (!isAttackable) { p.onSelectUnit(u.id); return; }
+          if (hoveredEnemyId === u.id) p.onAttack(u.id);
+          else p.onHoverEnemy(u.id);
         };
         return (
           <g
@@ -142,5 +144,6 @@ export function BattleBoard(p: BattleBoardProps) {
         );
       })}
     </svg>
+    </div>
   );
 }

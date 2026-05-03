@@ -12,7 +12,7 @@ export function Button({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`${cls} rounded px-4 py-2 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed`}
+      className={`${cls} rounded px-5 py-3 font-bold text-base min-h-[44px] disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {children}
     </button>
