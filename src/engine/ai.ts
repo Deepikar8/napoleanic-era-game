@@ -1,15 +1,11 @@
-import type { GameState, Scenario, Unit, BattleEvent, Pos, Side } from './types';
+import type { GameState, Scenario, Unit, BattleEvent, Pos } from './types';
 import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { moveUnit, attack, changeFormation, endTurn } from './turn';
 import { previewAttack } from './preview';
+import { sameTeam, isOnActiveSide } from './sides';
 
 export type AiDifficulty = 'easy' | 'normal' | 'hard';
-
-const COALITION: Side[] = ['austrian', 'russian'];
-const sameTeam = (a: Side, b: Side) =>
-  (a === 'french' && b === 'french') ||
-  (COALITION.includes(a) && COALITION.includes(b));
 
 const isCavalry = (t: Unit['type']) => t === 'light-cavalry' || t === 'heavy-cavalry';
 const isInfantry = (t: Unit['type']) =>
@@ -71,8 +67,9 @@ export function runAiTurn(
     }
   }
 
-  // Per-unit decision loop
-  const activeUnits = s.units.filter(u => u.side === s.currentSide && !u.hasActed);
+  // Per-unit decision loop. Coalition turns let both austrian and russian
+  // units act, so use the team-aware predicate rather than strict side equality.
+  const activeUnits = s.units.filter(u => isOnActiveSide(u.side, s.currentSide) && !u.hasActed);
   for (const unit of activeUnits) {
     // Refresh "current" view of this unit, since previous iterations may have changed strengths.
     const cur = s.units.find(u => u.id === unit.id);

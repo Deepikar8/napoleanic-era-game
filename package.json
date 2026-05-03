@@ -1,6 +1,6 @@
 {
   "name": "napoleanic-era-game",
-  "version": "1.7.5",
+  "version": "1.8.0",
   "description": "",
   "private": true,
   "type": "module",
@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "typecheck": "tsc -b"
+    "typecheck": "tsc -b",
+    "lint": "eslint src tests"
   },
   "keywords": [],
   "author": "",

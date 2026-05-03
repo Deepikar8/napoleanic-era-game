@@ -291,14 +291,29 @@ export const useGame = create<Store>((set, get) => ({
     if (!state || !scenario || !runId) return;
     const v = checkVictory(state, scenario.victory);
     const idx = state.scenarioIndex;
+
+    // Always record this battle's outcome before either advancing or ending the
+    // campaign. Without this, the final battle was never appended and a
+    // 7-for-7 'Historical Triumph' was unreachable on the campaign-end screen.
+    const finishedOutcome = {
+      scenarioId: state.scenarioId,
+      victor: v.kind === 'decided' ? v.victor : state.currentSide,
+      turnsTaken: state.turn,
+    };
+    const allOutcomes = [...state.outcomes, finishedOutcome];
+
     const next = campaignScenarios[idx + 1];
-    if (!next) { set({ screen: 'campaign-end' }); return; }
+    if (!next) {
+      set({
+        state: { ...state, outcomes: allOutcomes },
+        screen: 'campaign-end',
+      });
+      get().saveCurrent();
+      return;
+    }
     const nextState = beginBattle(next);
     nextState.scenarioIndex = idx + 1;
-    nextState.outcomes = [
-      ...state.outcomes,
-      { scenarioId: state.scenarioId, victor: v.kind === 'decided' ? v.victor : state.currentSide, turnsTaken: state.turn },
-    ];
+    nextState.outcomes = allOutcomes;
     set({ state: nextState, scenario: next, history: [nextState], screen: 'dispatch' });
     get().saveCurrent();
   },

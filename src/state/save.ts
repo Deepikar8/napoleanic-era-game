@@ -16,6 +16,61 @@ export interface SaveBackend {
   remove(runId: string): void;
 }
 
+// localStorage is user-editable; we can't trust the contents past a JSON parse.
+// Validate the shape we actually need before handing it to the engine.
+
+const SIDES = new Set(['french', 'austrian', 'russian']);
+const FORMATIONS = new Set(['line', 'column', 'square']);
+const FACINGS = new Set(['N', 'E', 'S', 'W']);
+const STRENGTHS = new Set([1, 2, 3, 4]);
+const MORALES = new Set([1, 2, 3]);
+const PHASES = new Set(['orders', 'end-of-turn']);
+
+const isObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const isPos = (v: unknown): boolean =>
+  isObject(v) && typeof v.x === 'number' && typeof v.y === 'number';
+
+const isUnit = (v: unknown): boolean => {
+  if (!isObject(v)) return false;
+  if (typeof v.id !== 'string') return false;
+  if (typeof v.side !== 'string' || !SIDES.has(v.side)) return false;
+  if (typeof v.type !== 'string') return false;          // engine validates type internally
+  if (!isPos(v.position)) return false;
+  if (typeof v.facing !== 'string' || !FACINGS.has(v.facing)) return false;
+  if (typeof v.formation !== 'string' || !FORMATIONS.has(v.formation)) return false;
+  if (typeof v.strength !== 'number' || !STRENGTHS.has(v.strength)) return false;
+  if (typeof v.morale !== 'number' || !MORALES.has(v.morale)) return false;
+  return true;
+};
+
+export function isValidGameState(v: unknown): v is GameState {
+  if (!isObject(v)) return false;
+  if (v.schemaVersion !== 1) return false;
+  if (v.campaignId !== 'ulm-austerlitz-1805') return false;
+  if (typeof v.scenarioIndex !== 'number' || v.scenarioIndex < 0) return false;
+  if (typeof v.scenarioId !== 'string') return false;
+  if (typeof v.currentSide !== 'string' || !SIDES.has(v.currentSide)) return false;
+  if (typeof v.turn !== 'number' || v.turn < 1) return false;
+  if (typeof v.phase !== 'string' || !PHASES.has(v.phase)) return false;
+  if (!Array.isArray(v.units) || !v.units.every(isUnit)) return false;
+  if (!Array.isArray(v.log)) return false;
+  if (!Array.isArray(v.decisionsTaken)) return false;
+  if (!Array.isArray(v.outcomes)) return false;
+  if (v.selectedUnitId !== null && typeof v.selectedUnitId !== 'string') return false;
+  if (v.pendingDecisionId !== null && typeof v.pendingDecisionId !== 'string') return false;
+  return true;
+}
+
+export function isValidSavedRun(v: unknown): v is SavedRun {
+  if (!isObject(v)) return false;
+  if (typeof v.runId !== 'string') return false;
+  if (typeof v.savedAt !== 'number') return false;
+  if (!isValidGameState(v.state)) return false;
+  return true;
+}
+
 let warned = false;
 
 export const localStorageBackend: SaveBackend = {
@@ -28,8 +83,8 @@ export const localStorageBackend: SaveBackend = {
       try {
         const raw = localStorage.getItem(k);
         if (!raw) continue;
-        const parsed = JSON.parse(raw) as SavedRun;
-        if (parsed.state?.schemaVersion === 1) out.push(parsed);
+        const parsed: unknown = JSON.parse(raw);
+        if (isValidSavedRun(parsed)) out.push(parsed);
       } catch { /* skip */ }
     }
     return out.sort((a, b) => b.savedAt - a.savedAt);
@@ -40,9 +95,8 @@ export const localStorageBackend: SaveBackend = {
     const raw = localStorage.getItem(KEY_PREFIX + runId);
     if (!raw) return null;
     try {
-      const parsed = JSON.parse(raw) as SavedRun;
-      if (parsed.state.schemaVersion !== 1) return null;
-      return parsed;
+      const parsed: unknown = JSON.parse(raw);
+      return isValidSavedRun(parsed) ? parsed : null;
     } catch { return null; }
   },
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Side } from './engine/types';
 import { useGame } from './state/store';
+import { isOnActiveSide, sameTeam } from './engine/sides';
 import { Splash } from './ui/Splash';
 import { CampaignMenu } from './ui/CampaignMenu';
 import { BattleEndScreen } from './ui/BattleEndScreen';
@@ -83,12 +83,7 @@ function BattleScreen() {
 
   if (!state || !scenario) return <Splash />;
 
-  const COALITION: Side[] = ['austrian', 'russian'];
-  const sideCanAct = (side: Side) =>
-    state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
-  const sameTeam = (a: Side, b: Side) =>
-    (a === 'french' && b === 'french') ||
-    (COALITION.includes(a) && COALITION.includes(b));
+  const sideCanAct = (side: typeof state.currentSide) => isOnActiveSide(side, state.currentSide);
   const hasAustrian = scenario.units.some(u => u.side === 'austrian');
   const hasRussian = scenario.units.some(u => u.side === 'russian');
   const sideLabel = state.currentSide === 'french'

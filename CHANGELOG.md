@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.8.0 — 2026-05-03
+
+External code review pass — two real bugs, a refactor, and tooling.
+
+### Fixed
+- **Final battle outcome was never recorded.** `advanceAfterBattle` only appended to `state.outcomes` when there was a *next* scenario; the campaign-final battle was lost. `CampaignEndScreen` checks `wins >= campaignScenarios.length` (7) but `outcomes` could only ever hold 6, making "Historical Triumph" unreachable. Now the just-finished outcome is appended unconditionally before either advancing or transitioning to `campaign-end`.
+- **Solo AI ignored coalition partners.** `runAiTurn` filtered active units with strict `u.side === s.currentSide`. On a coalition turn (currentSide = `'austrian'`), Russian units were skipped — at Austerlitz the AI would only run half its army. Now uses the same coalition-aware predicate as the engine and UI. New AI test verifies both austrian and russian units act on the same turn.
+
+### Changed (refactor)
+- **Coalition / team logic deduplicated.** `COALITION`, `sameTeam`, and the active-side predicate were copy-pasted across `engine/turn.ts`, `engine/ai.ts`, `engine/replay.ts`, `ui/BattleBoard.tsx`, and `app.tsx`. Now defined once in `engine/sides.ts` and re-exported from `engine/index.ts`. All five consumers updated.
+
+### Added
+- **Save validation beyond schemaVersion.** `localStorage` is user-editable; `save.ts` previously cast parsed JSON straight to `SavedRun` after a schemaVersion check, leaving any other field free to crash the engine. New `isValidGameState` / `isValidSavedRun` runtime guards check side/turn/phase enums, unit shape (id/side/type/position/facing/formation/strength/morale), and array fields. Three new tests cover malformed states, user-edited saves, and the wrapper validation.
+- **ESLint wired up.** `eslint.config.js` (flat config) plus a `lint` script in `package.json`. The TS deps were already installed but had no config or runner. Catches unused vars, `==` use, `var`, and stray console calls. Currently 0 warnings.
+
 ## v1.7.5 — 2026-05-03
 
 Reported by playtester: "what does morale mean?".

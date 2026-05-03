@@ -6,8 +6,7 @@ import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { resolveAttack } from './combat';
 import { applyPatch } from './patch';
-
-const COALITION: Side[] = ['austrian', 'russian'];
+import { COALITION, isOnActiveSide, sameTeam } from './sides';
 
 function nextSide(current: Side, units: Unit[]): Side {
   if (current === 'french') {
@@ -20,14 +19,8 @@ function nextSide(current: Side, units: Unit[]): Side {
 }
 
 // Both coalition sides act together in one combined turn.
-const canAct = (unitSide: Side, currentSide: Side): boolean =>
-  currentSide === 'french'
-    ? unitSide === 'french'
-    : COALITION.includes(unitSide);
-
-const areSameTeam = (a: Side, b: Side): boolean =>
-  (a === 'french' && b === 'french') ||
-  (COALITION.includes(a) && COALITION.includes(b));
+const canAct = isOnActiveSide;
+const areSameTeam = sameTeam;
 
 export function beginBattle(
   scenario: Scenario,

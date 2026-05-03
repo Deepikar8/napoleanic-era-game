@@ -147,6 +147,28 @@ describe('AI', () => {
     expect(rHard.events.some(e => e.kind === 'attack-resolved')).toBe(false);
   });
 
+  it('moves BOTH austrian and russian units on a coalition turn (currentSide = austrian)', () => {
+    const scn: Scenario = {
+      id: 'co-ai', title: 'Coalition AI', briefingMd: 't',
+      grid: { width: 10, height: 4 }, tiles: [],
+      units: [
+        u({ id: 'fr1', side: 'french',   position: { x: 0, y: 1 } }),
+        u({ id: 'au1', side: 'austrian', position: { x: 8, y: 0 }, type: 'line-infantry' }),
+        u({ id: 'ru1', side: 'russian',  position: { x: 8, y: 2 }, type: 'line-infantry' }),
+      ],
+      victory: [{ for: 'french', kind: 'eliminate-unit', args: { unitId: 'au1' } }],
+      ai: { generalRule: 'aggressive', triggers: [] },
+    };
+    let state = beginBattle(scn);
+    state = { ...state, currentSide: 'austrian' };
+    const r = runAiTurn(state, scn, 'normal');
+    const au1 = r.state.units.find(u => u.id === 'au1')!;
+    const ru1 = r.state.units.find(u => u.id === 'ru1')!;
+    // Both should have moved closer to fr1 (i.e. lower x).
+    expect(au1.position.x).toBeLessThan(8);
+    expect(ru1.position.x).toBeLessThan(8);
+  });
+
   it('picks the best-gap adjacent target instead of the first one', () => {
     // Two adjacent enemies: a strong grenadier (gap unfavorable) and a weak conscript
     // (gap favorable). AI should attack the conscript.

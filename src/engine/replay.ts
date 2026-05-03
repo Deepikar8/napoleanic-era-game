@@ -1,9 +1,8 @@
 import type {
-  GameState, Scenario, BattleEvent, Unit, Side, Pos, Strength,
+  GameState, Scenario, BattleEvent, Unit, Pos, Strength,
 } from './types';
 import { beginBattle } from './turn';
-
-const COALITION: Side[] = ['austrian', 'russian'];
+import { COALITION } from './sides';
 
 const facingFromMove = (from: Pos, to: Pos, fallback: Unit['facing']): Unit['facing'] => {
   if (to.x > from.x) return 'E';

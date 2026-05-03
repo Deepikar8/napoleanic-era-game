@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import type { GameState, Pos, Scenario, Side, TerrainKind, Unit } from '../engine/types';
+import type { GameState, Pos, Scenario, TerrainKind, Unit } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
+import { isOnActiveSide, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
 
 const TERRAIN_FILL: Record<string, string> = {
@@ -74,12 +75,7 @@ export function BattleBoard(p: BattleBoardProps) {
     ? state.units.find(u => u.id === selectedUnitId) ?? null
     : null;
 
-  const COALITION: Side[] = ['austrian', 'russian'];
-  const canAct = (side: Side) =>
-    state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
-  const sameTeam = (a: Side, b: Side) =>
-    (a === 'french' && b === 'french') ||
-    (COALITION.includes(a) && COALITION.includes(b));
+  const canAct = (side: Unit['side']) => isOnActiveSide(side, state.currentSide);
 
   const moves = selected && canAct(selected.side) && !selected.hasMoved
     ? legalMoves(selected, state.units, scenario)
