@@ -1,5 +1,5 @@
 import { useGame } from '../state/store';
-import { campaignScenarios } from '../scenarios';
+import { campaignScenarios, getScenarioById } from '../scenarios';
 import { Button, Panel } from './shared';
 
 type Verdict = 'triumph' | 'partial' | 'defeat';
@@ -40,9 +40,9 @@ export function CampaignEndScreen() {
         <Panel title="Battle results">
           <ul className="text-sm space-y-1">
             {state?.outcomes.map(o => (
-              <li key={o.scenarioId} className="flex justify-between">
-                <span>{o.scenarioId}</span>
-                <span className={o.victor === 'french' ? 'text-french font-semibold' : 'opacity-70'}>
+              <li key={o.scenarioId} className="flex justify-between gap-2">
+                <span className="truncate">{getScenarioById(o.scenarioId)?.title ?? o.scenarioId}</span>
+                <span className={o.victor === 'french' ? 'text-french font-semibold whitespace-nowrap' : 'opacity-70 whitespace-nowrap'}>
                   {o.victor} · turn {o.turnsTaken}
                 </span>
               </li>

@@ -24,9 +24,14 @@ export function Splash() {
         <p className="font-serif text-xl italic mb-8 opacity-80">A Napoleonic Campaign</p>
         <div className="space-y-3">
           <div><Button onClick={() => startNewRun(campaignScenarios[0])}>New Campaign</Button></div>
-          {runs.length > 0 && (
-            <div><Button onClick={onContinue} kind="secondary">Continue ({runs[0].state.scenarioId}, turn {runs[0].state.turn})</Button></div>
-          )}
+          {runs.length > 0 && (() => {
+            const last = runs[0];
+            const sc = getScenarioById(last.state.scenarioId);
+            const label = sc ? sc.title : last.state.scenarioId;
+            return (
+              <div><Button onClick={onContinue} kind="secondary">Continue: {label} · turn {last.state.turn}</Button></div>
+            );
+          })()}
           <div><Button onClick={() => goto('campaign-menu')} kind="secondary">Campaign Menu</Button></div>
           <div><Button onClick={() => goto('replay')} kind="secondary">Replay last run</Button></div>
           <label className="flex items-center justify-center gap-2 text-sm pt-2 cursor-pointer select-none">
