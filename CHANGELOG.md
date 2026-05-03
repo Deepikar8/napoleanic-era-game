@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.2 — 2026-05-03
+
+Reported by playtester: "I saw 3 unspent but none of the pawns when clicked showed the green paths or red to attack."
+
+### Fixed
+- **End Turn count was lying.** "Unspent" was counting any unit that hadn't *attacked* — but a unit that moved into an empty square with no enemies adjacent has nothing left to do. It still appeared in the warning. Now the count includes only units that actually have an action available: either a legal move target left, or an adjacent enemy to attack. The count matches what the kid sees on the board (green tiles + red rings).
+- Reworded the warning from "X units haven't acted yet" to "X units can still move or attack" — matches the count's actual meaning.
+
 ## v1.6.1 — 2026-05-03
 
 Reported by playtester: "I don't clearly understand the rules, how many turns we have, what does it mean when you said end anyway"

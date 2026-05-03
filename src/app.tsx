@@ -16,7 +16,7 @@ import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
 import { UnitSpriteDefs } from './art/unit-silhouettes';
-import { checkVictory, summarizeVictory } from './engine';
+import { checkVictory, summarizeVictory, legalMoves, chebyshev } from './engine';
 
 export default function App() {
   const screen = useGame(s => s.screen);
@@ -86,12 +86,29 @@ function BattleScreen() {
   const COALITION: Side[] = ['austrian', 'russian'];
   const sideCanAct = (side: Side) =>
     state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
+  const sameTeam = (a: Side, b: Side) =>
+    (a === 'french' && b === 'french') ||
+    (COALITION.includes(a) && COALITION.includes(b));
   const hasAustrian = scenario.units.some(u => u.side === 'austrian');
   const hasRussian = scenario.units.some(u => u.side === 'russian');
   const sideLabel = state.currentSide === 'french'
     ? 'french'
     : (hasAustrian && hasRussian ? 'coalition' : state.currentSide);
-  const unspentCount = state.units.filter(u => sideCanAct(u.side) && !u.hasActed).length;
+  // Count units that *actually* still have an action available — has any legal
+  // move target OR has an adjacent enemy it could attack. A unit that moved to
+  // an empty square with no enemies in reach should not count, even though
+  // hasActed is still false.
+  const actionableCount = state.units.filter(u => {
+    if (!sideCanAct(u.side)) return false;
+    const canStillMove = !u.hasMoved && legalMoves(u, state.units, scenario).length > 0;
+    if (canStillMove) return true;
+    if (!u.hasActed) {
+      const hasAdjacentEnemy = state.units.some(o =>
+        !sameTeam(o.side, u.side) && chebyshev(o.position, u.position) === 1);
+      if (hasAdjacentEnemy) return true;
+    }
+    return false;
+  }).length;
   const onEndTurn = () => {
     if (endTurnArmed) { setEndTurnArmed(false); doEndTurn(); }
     else setEndTurnArmed(true);
@@ -157,8 +174,8 @@ function BattleScreen() {
           )}
           <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'} disabled={isAnimating}>
             {endTurnArmed
-              ? (unspentCount > 0
-                  ? `Confirm? ${unspentCount} ${unspentCount === 1 ? 'unit hasn’t' : 'units haven’t'} acted yet`
+              ? (actionableCount > 0
+                  ? `Confirm? ${actionableCount} ${actionableCount === 1 ? 'unit can' : 'units can'} still move or attack`
                   : 'Confirm end turn')
               : 'End Turn'}
           </Button>
