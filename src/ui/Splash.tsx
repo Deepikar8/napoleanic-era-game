@@ -6,7 +6,7 @@ import { austerlitz } from '../scenarios/07-austerlitz';
 import { campaignScenarios, getScenarioById } from '../scenarios';
 
 export function Splash() {
-  const { startNewRun, loadRun, goto } = useGame();
+  const { startNewRun, loadRun, goto, solo, setSolo } = useGame();
   const [runs, setRuns] = useState<SavedRun[]>([]);
 
   useEffect(() => { setRuns(localStorageBackend.list()); }, []);
@@ -30,6 +30,10 @@ export function Splash() {
           )}
           <div><Button onClick={() => goto('campaign-menu')} kind="secondary">Campaign Menu</Button></div>
           <div><Button onClick={() => goto('replay')} kind="secondary">Replay last run</Button></div>
+          <label className="flex items-center justify-center gap-2 text-sm pt-2 cursor-pointer select-none">
+            <input type="checkbox" checked={solo} onChange={e => setSolo(e.target.checked)} />
+            <span>Play solo (AI runs the Coalition)</span>
+          </label>
         </div>
         <p className="mt-10 text-xs opacity-50">v0.2 · Phase 2</p>
       </div>

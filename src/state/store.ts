@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, Pos, Formation, Scenario } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
+import { runAiTurn } from '../engine/ai';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
 
@@ -17,6 +18,7 @@ interface Store {
   selectedUnitId: string | null;
   hoveredEnemyId: string | null;
   helpOpen: boolean;
+  solo: boolean;
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -32,12 +34,14 @@ interface Store {
   saveCurrent(): void;
   advanceAfterBattle(): void;
   toggleHelp(): void;
+  setSolo(b: boolean): void;
 }
 
 export const useGame = create<Store>((set, get) => ({
   runId: null, state: null, scenario: null, history: [],
   screen: 'splash', selectedUnitId: null, hoveredEnemyId: null,
   helpOpen: false,
+  solo: false,
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -101,6 +105,20 @@ export const useGame = create<Store>((set, get) => ({
       screen: v.kind === 'decided' ? 'battle-end' : 'battle',
     });
     if (runId) get().saveCurrent();
+
+    const after = get();
+    if (after.scenario && after.state &&
+        after.state.currentSide !== 'french' &&
+        after.solo &&
+        after.screen === 'battle') {
+      const ai = runAiTurn(after.state, after.scenario);
+      const v2 = checkVictory(ai.state, after.scenario.victory);
+      set({
+        state: ai.state, history: [ai.state],
+        screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
+      });
+      if (runId) get().saveCurrent();
+    }
   },
 
   undo() {
@@ -117,6 +135,7 @@ export const useGame = create<Store>((set, get) => ({
   },
 
   toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
+  setSolo(b) { set({ solo: b }); },
 
   advanceAfterBattle() {
     const { state, scenario, runId } = get();
