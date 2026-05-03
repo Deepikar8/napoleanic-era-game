@@ -29,6 +29,7 @@ export function Splash() {
             <div><Button onClick={onContinue} kind="secondary">Continue ({runs[0].state.scenarioId}, turn {runs[0].state.turn})</Button></div>
           )}
           <div><Button onClick={() => goto('campaign-menu')} kind="secondary">Campaign Menu</Button></div>
+          <div><Button onClick={() => goto('replay')} kind="secondary">Replay last run</Button></div>
         </div>
         <p className="mt-10 text-xs opacity-50">v0.2 · Phase 2</p>
       </div>
