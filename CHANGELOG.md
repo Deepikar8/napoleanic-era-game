@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.1 — 2026-05-03
+
+Hotfixes from first real playthrough.
+
+### Fixed
+- **Giant silhouette overflow.** `<use>` of a `<symbol>` without explicit width/height defaults to 100% of the use's SVG context — for cavalry/artillery this rendered massive white shapes overlaying the right side of the board. Added explicit `width={24} height={24}` on the use.
+
+### Added
+- **Unit-type badge** in the top-left of every unit. Two-letter codes (LI/Li/Gr/LC/HC/FA/HA) on a coloured pill — colour-coded by category (brown=infantry, red=cavalry, blue=artillery). Always visible regardless of silhouette legibility, so cavalry vs infantry is unambiguous at a glance.
+
 ## v1.2.0 — 2026-05-03
 
 The "less to parse" pass — visual clarity and replay polish.

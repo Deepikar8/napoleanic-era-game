@@ -18,6 +18,16 @@ const SIDE_TEXT: Record<Unit['side'], string> = {
   french: '#ffffff', austrian: '#2a2018', russian: '#ffffff',
 };
 
+const TYPE_BADGE: Record<Unit['type'], { code: string; bg: string; fg: string }> = {
+  'line-infantry':   { code: 'LI', bg: '#5a4a30', fg: '#f5f0e6' },
+  'light-infantry':  { code: 'Li', bg: '#7a6a40', fg: '#f5f0e6' },
+  'grenadier':       { code: 'Gr', bg: '#3a2a10', fg: '#f5f0e6' },
+  'light-cavalry':   { code: 'LC', bg: '#a04040', fg: '#f5f0e6' },
+  'heavy-cavalry':   { code: 'HC', bg: '#702020', fg: '#f5f0e6' },
+  'foot-artillery':  { code: 'FA', bg: '#2a3a5a', fg: '#f5f0e6' },
+  'horse-artillery': { code: 'HA', bg: '#1a2a4a', fg: '#f5f0e6' },
+};
+
 const TERRAIN_INFO: Record<TerrainKind, { name: string; effect: string }> = {
   plain:  { name: 'Plain',  effect: 'No bonus' },
   forest: { name: 'Forest', effect: '+1 defence · doubles move cost' },
@@ -144,8 +154,16 @@ export function BattleBoard(p: BattleBoardProps) {
             />
             <g transform={`translate(${(cellSize - 8) * 0.1}, ${(cellSize - 8) * 0.1}) scale(${(cellSize - 8) * 0.032})`}
                style={{ color: SIDE_TEXT[u.side] }}>
-              <use href={`#${unitSilhouetteId(u.type)}`} />
+              <use href={`#${unitSilhouetteId(u.type)}`} width={24} height={24} />
             </g>
+            {/* Unit-type badge — top-left, always visible */}
+            <rect x={2} y={2} width={16} height={11}
+                  fill={TYPE_BADGE[u.type].bg} stroke="#1a120a" strokeWidth={0.6} rx="2" />
+            <text x={10} y={10.5} textAnchor="middle"
+                  fontSize="8" fontWeight="700" fill={TYPE_BADGE[u.type].fg}>
+              {TYPE_BADGE[u.type].code}
+            </text>
+            {/* Strength badge — bottom-right */}
             <rect x={cellSize - 22} y={cellSize - 22} width={14} height={12}
                   fill="#d4a017" stroke="#2a2018" strokeWidth={0.6} rx="2" />
             <text x={cellSize - 15} y={cellSize - 13} textAnchor="middle"
