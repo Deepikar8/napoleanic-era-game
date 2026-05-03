@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import type { Side } from './engine/types';
 import { useGame } from './state/store';
 import { Splash } from './ui/Splash';
 import { CampaignMenu } from './ui/CampaignMenu';
@@ -43,7 +44,24 @@ function BattleScreen() {
 
   useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
 
+  const [endTurnArmed, setEndTurnArmed] = useState(false);
+  useEffect(() => { setEndTurnArmed(false); }, [state?.turn, state?.currentSide]);
+  useEffect(() => {
+    if (!endTurnArmed) return;
+    const t = setTimeout(() => setEndTurnArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [endTurnArmed]);
+
   if (!state || !scenario) return <Splash />;
+
+  const COALITION: Side[] = ['austrian', 'russian'];
+  const sideCanAct = (side: Side) =>
+    state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
+  const unspentCount = state.units.filter(u => sideCanAct(u.side) && !u.hasActed).length;
+  const onEndTurn = () => {
+    if (endTurnArmed) { setEndTurnArmed(false); doEndTurn(); }
+    else setEndTurnArmed(true);
+  };
 
   const selected = selectedUnitId ? state.units.find(u => u.id === selectedUnitId) ?? null : null;
   const hoveredEnemy = hoveredEnemyId ? state.units.find(u => u.id === hoveredEnemyId) ?? null : null;
@@ -82,7 +100,11 @@ function BattleScreen() {
               <Button onClick={() => doFormation('square')} kind="secondary">Square</Button>
             </>
           )}
-          <Button onClick={doEndTurn}>End Turn</Button>
+          <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'}>
+            {endTurnArmed
+              ? (unspentCount > 0 ? `End anyway? (${unspentCount} unspent)` : 'Confirm end turn')
+              : 'End Turn'}
+          </Button>
         </div>
       </div>
       <aside>
