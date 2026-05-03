@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.1 — 2026-05-03
+
+### Fixed
+- **"<unit> is not your unit" error mid-attack.** Reported by playtester selecting fr-murat on Wertingen and trying to attack. Root cause in `BattleBoard`: the `adjacentEnemies` filter only checked `u.side !== selected.side` — it didn't verify the selected unit was on the active side, nor that the target was on the opposing team (coalition-aware). So selecting a non-active-side unit would still light up enemies with the red attackable ring; tap-tap-to-attack invoked the engine, which correctly rejected with the raw error. Now the attack indicator only renders when:
+  - `canAct(selected.side)` (the selected unit is on the side currently to act), AND
+  - `!selected.hasActed` (it hasn't already attacked this turn), AND
+  - the target is **not** on the same team via `sameTeam` (austrian + russian count as one team).
+- Same fix prevents Austerlitz coalition partners from showing each other as attackable.
+
 ## v1.3.0 — 2026-05-03
 
 The "make AI moves visible" pass + coalition smoke test.

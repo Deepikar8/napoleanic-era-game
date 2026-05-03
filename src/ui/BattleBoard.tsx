@@ -77,15 +77,21 @@ export function BattleBoard(p: BattleBoardProps) {
   const COALITION: Side[] = ['austrian', 'russian'];
   const canAct = (side: Side) =>
     state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
+  const sameTeam = (a: Side, b: Side) =>
+    (a === 'french' && b === 'french') ||
+    (COALITION.includes(a) && COALITION.includes(b));
 
   const moves = selected && canAct(selected.side) && !selected.hasMoved
     ? legalMoves(selected, state.units, scenario)
     : [];
   const moveSet = new Set(moves.map(posKey));
 
-  const adjacentEnemies = selected
+  // Only treat enemies as "attackable" when the selected unit can actually
+  // attack this turn AND the target is on the opposing team. Coalition
+  // partners (austrian + russian) count as same team.
+  const adjacentEnemies = selected && canAct(selected.side) && !selected.hasActed
     ? state.units.filter(u =>
-        u.side !== selected.side &&
+        !sameTeam(u.side, selected.side) &&
         chebyshev(u.position, selected.position) === 1)
     : [];
   const enemySet = new Set(adjacentEnemies.map(u => u.id));
