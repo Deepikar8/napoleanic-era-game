@@ -38,12 +38,24 @@ export const elchingen: Scenario = {
     u('austrian', 'au-arty', 'Austrian Btty','foot-artillery', 5, 6, 2),
   ],
   victory: [
-    { for: 'french', kind: 'capture-tile', args: { pos: { x: 5, y: 4 } } },
+    // Take the village AND silence the Austrian battery. Just sprinting a
+    // cavalryman into the town wins nothing if the guns are still firing
+    // from the heights.
+    {
+      for: 'french', kind: 'all-of',
+      label: 'Take Elchingen + silence the battery',
+      args: {
+        conditions: [
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 5, y: 4 } } },
+          { for: 'french', kind: 'eliminate-unit', args: { unitId: 'au-au-arty' } },
+        ],
+      },
+    },
     { for: 'austrian', kind: 'survive-turns', args: { turns: 8 } },
   ],
   turnLimit: 8,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '03-elchingen-postbattle',
   tacticalHint:
-    'Bridge assault. The Danube is impassable except at the bridge (5,3). Move your infantry in column to cross fast, then switch to line on the south bank for the firefight. The Austrian battery on the heights will hurt — knock it out early or take the village by attrition. Take the town tile (5,4) before turn 8.',
+    'Bridge assault — TWO objectives. The Austrian battery on the heights will hammer your approach, so you must (a) take the village (5,4) AND (b) eliminate the Austrian artillery. Sprint the cavalry across the bridge in column, switch infantry to line on the south bank for the firefight, and concentrate force on the battery — adjacent friendlies give +1 attack.',
 };

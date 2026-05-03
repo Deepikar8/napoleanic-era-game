@@ -47,12 +47,16 @@ export type VictoryConditionKind =
   | 'hold-tile-for-turns'   // args: { pos: Pos; turns: number }
   | 'capture-tile'          // args: { pos: Pos }
   | 'reduce-side-strength'  // args: { side: Side; threshold: number }
-  | 'survive-turns';        // args: { turns: number }
+  | 'survive-turns'         // args: { turns: number }
+  | 'all-of';               // args: { conditions: VictoryCondition[] } — all sub-conditions must be met
 
 export interface VictoryCondition {
   for: Side;
   kind: VictoryConditionKind;
   args: Record<string, unknown>;
+  /** Optional human-readable name for the progress chip / log. Falls back to a
+   *  per-kind generated label if absent. Most useful for 'all-of' groups. */
+  label?: string;
 }
 
 export type AiGeneralRule = 'aggressive' | 'defensive' | 'fixed';

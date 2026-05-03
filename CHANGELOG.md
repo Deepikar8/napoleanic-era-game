@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.10.0 — 2026-05-03
+
+Per-scenario unique mechanics — addressing the design-review point that scenarios played homogeneously.
+
+### Added
+- **`'all-of'` victory combinator.** Lets a `VictoryCondition` require *every* sub-condition to be met before firing. The top-level `victory[]` array is still implicit OR; `all-of` provides AND. Plus an optional `label?: string` on `VictoryCondition` for clean progress chips.
+- **Progress display for combined goals.** `summarizeVictory` now shows fractional progress on `all-of` chips: "Encircle Ulm — close all 4 roads (2/4)". Met sub-conditions count toward the total live during the battle.
+
+### Changed (scenario design)
+- **Ulm is now a real encirclement.** Previously: capture the southern road tile = instant win (could be done turn 2 with a cavalry sprint). Now: occupy ALL FOUR road tiles (3,4), (6,4), (4,3), (4,6) — five French commanders, four roads, six turns. Forces the kid to spread the corps and time arrivals. Tactical hint rewritten accordingly.
+- **Elchingen requires silencing the battery, not just taking the village.** Previously: capture (5,4) = instant win. Now: capture the village AND eliminate the Austrian foot artillery (which was hammering the bridge approach in the historical battle). Forces the kid to actually fight rather than sprint a cavalryman past the guns. Hint updated.
+
+### Engine
+- New tests: `all-of` requires every sub-condition; `summarizeVictory` shows the progress count.
+- Scenario validation test now recurses into `all-of` to verify nested `eliminate-unit` references point at real units.
+
 ## v1.9.1 — 2026-05-03
 
 External code review pass.

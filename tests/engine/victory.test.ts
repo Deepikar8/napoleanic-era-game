@@ -60,4 +60,57 @@ describe('victory', () => {
     expect(checkVictory(onIt, conds))
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
   });
+
+  it('all-of requires every sub-condition before firing', () => {
+    const conds: VictoryCondition[] = [{
+      for: 'french', kind: 'all-of',
+      label: 'Two roads',
+      args: {
+        conditions: [
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 1, y: 1 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 2, y: 2 } } },
+        ],
+      },
+    }];
+
+    const noneOnRoads = baseState({
+      units: [u({ id: 'fr1', side: 'french', position: { x: 0, y: 0 } })],
+    });
+    expect(checkVictory(noneOnRoads, conds)).toEqual({ kind: 'in-progress' });
+
+    const onlyOne = baseState({
+      units: [u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } })],
+    });
+    expect(checkVictory(onlyOne, conds)).toEqual({ kind: 'in-progress' });
+
+    const bothCovered = baseState({
+      units: [
+        u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } }),
+        u({ id: 'fr2', side: 'french', position: { x: 2, y: 2 } }),
+      ],
+    });
+    expect(checkVictory(bothCovered, conds))
+      .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
+  });
+
+  it('summarizeVictory shows progress count for all-of (e.g., 2/4)', async () => {
+    const { summarizeVictory } = await import('../../src/engine/victory');
+    const conds: VictoryCondition[] = [{
+      for: 'french', kind: 'all-of',
+      label: 'Encircle',
+      args: {
+        conditions: [
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 1, y: 1 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 2, y: 2 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 3, y: 3 } } },
+        ],
+      },
+    }];
+    const oneCovered = baseState({
+      units: [u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } })],
+    });
+    const summary = summarizeVictory(oneCovered, conds);
+    expect(summary[0].label).toBe('Encircle (1/3)');
+    expect(summary[0].met).toBe(false);
+  });
 });

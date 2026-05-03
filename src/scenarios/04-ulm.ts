@@ -38,13 +38,25 @@ export const ulm: Scenario = {
     u('austrian', 'au-1',   'Austrian Inf.','line-infantry', 5, 5, 1),
   ],
   victory: [
-    // Capture the southern road tile to seal the encirclement.
-    { for: 'french', kind: 'capture-tile', args: { pos: { x: 4, y: 6 } } },
+    // True encirclement: occupy ALL FOUR roads out of Ulm. Mack can't surrender
+    // until every escape line is sealed.
+    {
+      for: 'french', kind: 'all-of',
+      label: 'Encircle Ulm — close all 4 roads',
+      args: {
+        conditions: [
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 3, y: 4 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 6, y: 4 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 4, y: 3 } } },
+          { for: 'french', kind: 'capture-tile', args: { pos: { x: 4, y: 6 } } },
+        ],
+      },
+    },
     { for: 'austrian', kind: 'survive-turns', args: { turns: 6 } },
   ],
   turnLimit: 6,
   ai: { generalRule: 'defensive', triggers: [] },
   postBattleDispatch: '04-ulm-postbattle',
   tacticalHint:
-    'Maneuver puzzle, not a slugfest. Mack will not attack — he\'s already negotiating surrender. You don\'t need to fight; you need to occupy the southern road tile (4, 6) within 6 turns. Use cavalry — they have the longest move (4 squares). Square is wasted here. Just race.',
+    'True encirclement, not a sprint. Mack won\'t attack — he\'s already negotiating. To win you need to occupy ALL FOUR road tiles around Ulm (3,4), (6,4), (4,3), and (4,6) by turn 6. That\'s 4 separate units in 4 separate places, which is why you have 5 commanders. Cavalry are fastest — Murat\'s heavy is your reliable pin. Square formation is wasted here. Spread out and march.',
 };

@@ -42,6 +42,15 @@ const condMet = (state: GameState, c: VictoryCondition): { met: boolean; reason:
       // on at the end of their turn N and win before being challenged.
       return { met: standing && state.turn > turns, reason: `held tile for ${turns} turns` };
     }
+    case 'all-of': {
+      const subs = c.args.conditions as VictoryCondition[];
+      const results = subs.map(s => condMet(state, s));
+      const allMet = results.every(r => r.met);
+      const reason = allMet
+        ? results.map(r => r.reason).join(' + ')
+        : `${results.filter(r => r.met).length}/${subs.length} sub-conditions met`;
+      return { met: allMet, reason };
+    }
   }
 };
 
@@ -71,6 +80,17 @@ export function summarizeVictory(
 }
 
 function labelFor(state: GameState, c: VictoryCondition, met: boolean): string {
+  // Custom label override applies to any kind. For all-of we still annotate
+  // the progress count; for others we fall through to the generated suffix.
+  if (c.kind === 'all-of') {
+    const subs = c.args.conditions as VictoryCondition[];
+    const metCount = subs.filter(s => condMet(state, s).met).length;
+    const name = c.label ?? `Combined goal`;
+    return met ? `${name} ✓` : `${name} (${metCount}/${subs.length})`;
+  }
+  if (c.label) {
+    return met ? `${c.label} ✓` : c.label;
+  }
   switch (c.kind) {
     case 'eliminate-unit': {
       const id = c.args.unitId as string;

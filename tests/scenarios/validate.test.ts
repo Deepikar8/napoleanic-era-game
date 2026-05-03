@@ -25,13 +25,17 @@ describe('scenario validation', () => {
         }
       });
 
-      it('victory conditions reference real units', () => {
-        for (const c of s.victory) {
-          if (c.kind === 'eliminate-unit') {
-            const id = c.args.unitId as string;
+      it('victory conditions reference real units (recursive into all-of)', () => {
+        const checkRefs = (cond: typeof s.victory[number]): void => {
+          if (cond.kind === 'eliminate-unit') {
+            const id = cond.args.unitId as string;
             expect(s.units.some(u => u.id === id)).toBe(true);
+          } else if (cond.kind === 'all-of') {
+            const subs = cond.args.conditions as Array<typeof s.victory[number]>;
+            for (const sub of subs) checkRefs(sub);
           }
-        }
+        };
+        for (const c of s.victory) checkRefs(c);
       });
 
       it('all tiles in bounds', () => {
