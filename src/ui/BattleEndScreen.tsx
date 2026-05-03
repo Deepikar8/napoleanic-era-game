@@ -43,10 +43,14 @@ export function BattleEndScreen() {
           </div>
         </Panel>
 
-        <div className="mt-4 flex gap-2 justify-center">
+        <div className="mt-4 flex gap-2 justify-center flex-wrap">
           <Button kind="secondary" onClick={() => goto('campaign-menu')}>Campaign Menu</Button>
+          <Button kind="secondary" onClick={() => goto('replay')}>Replay this battle</Button>
           <Button onClick={advanceAfterBattle}>Continue</Button>
         </div>
+        <p className="mt-3 text-xs italic opacity-70">
+          Replay shows every move and attack of the most recent battle. Once you Continue to the next dispatch, this replay is replaced.
+        </p>
       </div>
     </main>
   );

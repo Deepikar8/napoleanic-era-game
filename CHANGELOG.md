@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.4 — 2026-05-03
+
+Reported by playtester: "where is replay today, I cannot find it".
+
+### Added
+- **"Replay this battle" button on the Battle End screen.** Replay was only reachable from the splash before, which meant after winning a fight you had to back out of the campaign to review what happened. Now it sits between Campaign Menu and Continue. Footnote explains the limitation: replay is for the *most recent* battle; once you Continue, it's replaced by the next one's state.
+
 ## v1.7.3 — 2026-05-03
 
 Reported by playtester: "so can LI attack anybody or there are rules?"
