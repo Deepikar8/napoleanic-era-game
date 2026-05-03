@@ -4,6 +4,7 @@ import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory }
 import { runAiTurn } from '../engine/ai';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
+import { playTurnDrum, playFifeFlourish, setMuted as soundSetMuted } from '../sound';
 
 export type Screen = 'splash' | 'campaign-menu' | 'dispatch' | 'battle' | 'battle-end' | 'campaign-end' | 'replay';
 
@@ -19,6 +20,7 @@ interface Store {
   hoveredEnemyId: string | null;
   helpOpen: boolean;
   solo: boolean;
+  muted: boolean;
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -35,6 +37,7 @@ interface Store {
   advanceAfterBattle(): void;
   toggleHelp(): void;
   setSolo(b: boolean): void;
+  setMuted(b: boolean): void;
 }
 
 export const useGame = create<Store>((set, get) => ({
@@ -42,6 +45,7 @@ export const useGame = create<Store>((set, get) => ({
   screen: 'splash', selectedUnitId: null, hoveredEnemyId: null,
   helpOpen: false,
   solo: false,
+  muted: false,
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -97,6 +101,7 @@ export const useGame = create<Store>((set, get) => ({
   doEndTurn() {
     const { state, scenario, runId } = get();
     if (!state || !scenario) return;
+    playTurnDrum();
     const r = endTurn(state);
     const v = checkVictory(r.state, scenario.victory);
     set({
@@ -104,6 +109,7 @@ export const useGame = create<Store>((set, get) => ({
       selectedUnitId: null, hoveredEnemyId: null,
       screen: v.kind === 'decided' ? 'battle-end' : 'battle',
     });
+    if (v.kind === 'decided') playFifeFlourish();
     if (runId) get().saveCurrent();
 
     const after = get();
@@ -117,6 +123,7 @@ export const useGame = create<Store>((set, get) => ({
         state: ai.state, history: [ai.state],
         screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
       });
+      if (v2.kind === 'decided') playFifeFlourish();
       if (runId) get().saveCurrent();
     }
   },
@@ -136,6 +143,7 @@ export const useGame = create<Store>((set, get) => ({
 
   toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
   setSolo(b) { set({ solo: b }); },
+  setMuted(b) { soundSetMuted(b); set({ muted: b }); },
 
   advanceAfterBattle() {
     const { state, scenario, runId } = get();

@@ -6,7 +6,7 @@ import { austerlitz } from '../scenarios/07-austerlitz';
 import { campaignScenarios, getScenarioById } from '../scenarios';
 
 export function Splash() {
-  const { startNewRun, loadRun, goto, solo, setSolo } = useGame();
+  const { startNewRun, loadRun, goto, solo, setSolo, muted, setMuted } = useGame();
   const [runs, setRuns] = useState<SavedRun[]>([]);
 
   useEffect(() => { setRuns(localStorageBackend.list()); }, []);
@@ -35,7 +35,12 @@ export function Splash() {
             <span>Play solo (AI runs the Coalition)</span>
           </label>
         </div>
-        <p className="mt-10 text-xs opacity-50">v0.2 · Phase 2</p>
+        <p className="mt-10 text-xs opacity-50">
+          v0.4 · Phase 4
+          <label className="ml-2 cursor-pointer select-none">
+            <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} /> Mute
+          </label>
+        </p>
       </div>
     </main>
   );
