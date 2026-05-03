@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.7.3 — 2026-05-03
+
+Reported by playtester: "so can LI attack anybody or there are rules?"
+
+### Changed
+- **Help overlay Combat section rewritten** to lead with "who can attack whom" — making it explicit that any unit can attack any adjacent enemy (kid was unsure if there were type-restrictions). Spells out the three real requirements (adjacency, your turn, opposing team).
+- **New "Matchups cheatsheet" table** showing best formation per enemy type (Infantry → Line, Cavalry → Square, Artillery → Line/column). Plus a footnote on the cavalry-charge bonus and a pointer to the AttackPreview panel.
+- Formations section now mentions that changing formation costs the unit's action.
+
 ## v1.7.2 — 2026-05-03
 
 Reported by playtester: AI animation was unreadable, defensive scenarios looked broken, and the side log didn't update during AI turns.

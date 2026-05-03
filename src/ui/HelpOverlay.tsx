@@ -23,8 +23,15 @@ export function HelpOverlay() {
           <li>Look at the small chips above the board — they show your French objectives and how close you are to each.</li>
         </ul>
 
-        <h3 className="font-bold mt-4">Combat</h3>
-        <p>Combat compares <code>strength + terrain + flank + formation + morale</code> on each side. Larger gap is better for the higher side.</p>
+        <h3 className="font-bold mt-4">Combat — who can attack whom</h3>
+        <p className="text-sm">Any unit can attack any adjacent enemy. The only requirements:</p>
+        <ul className="list-disc list-inside text-sm">
+          <li>Target must be on the next square (the 8 squares around you).</li>
+          <li>It's your side's turn AND the unit hasn't already attacked.</li>
+          <li>Target is on the other team. (Austria + Russia count as one team — they can't attack each other.)</li>
+        </ul>
+
+        <p className="text-sm mt-3">Combat compares <code>strength + terrain + flank + formation + morale</code> on each side. Larger gap is better for the higher side.</p>
         <table className="text-sm border w-full mt-2 mb-3">
           <thead className="bg-parchmentDark"><tr><th className="p-1 text-left">Result gap</th><th className="p-1 text-left">Outcome</th></tr></thead>
           <tbody>
@@ -36,7 +43,36 @@ export function HelpOverlay() {
           </tbody>
         </table>
 
-        <h3 className="font-bold">Terrain (defender bonus)</h3>
+        <h3 className="font-bold mt-3">Matchups cheatsheet</h3>
+        <table className="text-sm border w-full mt-2 mb-3">
+          <thead className="bg-parchmentDark">
+            <tr>
+              <th className="p-1 text-left">If you're attacking…</th>
+              <th className="p-1 text-left">Best formation</th>
+              <th className="p-1 text-left">Avoid</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="p-1">Infantry (LI / Li / Gr)</td>
+              <td className="p-1"><strong>Line</strong> (+1 in firefights)</td>
+              <td className="p-1">Column (−1)</td>
+            </tr>
+            <tr>
+              <td className="p-1">Cavalry (LC / HC)</td>
+              <td className="p-1"><strong>Square</strong> (+2 vs cavalry)</td>
+              <td className="p-1">Line/column — they get a +1 charge against you</td>
+            </tr>
+            <tr>
+              <td className="p-1">Artillery (FA / HA)</td>
+              <td className="p-1">Line or column</td>
+              <td className="p-1"><strong>Square</strong> (−2 vs artillery)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-xs italic opacity-80">Cavalry attackers also get +1 when charging non-square infantry. Hover an enemy or check the AttackPreview panel — it shows the predicted gap before you commit.</p>
+
+        <h3 className="font-bold mt-3">Terrain (defender bonus)</h3>
         <ul className="list-disc list-inside text-sm">
           <li>Hill / Forest / Town: +1 defence</li>
           <li>River: impassable except at bridges</li>
@@ -45,10 +81,11 @@ export function HelpOverlay() {
 
         <h3 className="font-bold mt-3">Formations</h3>
         <ul className="list-disc list-inside text-sm">
-          <li>Line — +1 in firefights</li>
-          <li>Column — +1 movement; −1 in firefights</li>
-          <li>Square — +2 vs cavalry, −2 vs artillery</li>
+          <li><strong>Line</strong> — +1 in firefights with infantry</li>
+          <li><strong>Column</strong> — +1 movement; −1 in firefights with infantry</li>
+          <li><strong>Square</strong> — +2 vs cavalry, −2 vs artillery (no firefight bonus)</li>
         </ul>
+        <p className="text-xs italic opacity-80 mt-1">Change formation by selecting your unit and tapping Line / Column / Square in the action bar. Changing formation uses the unit's action for the turn.</p>
 
         <h3 className="font-bold mt-3">Morale (hidden)</h3>
         <p className="text-sm">Each unit has a hidden morale of 1 (Conscript), 2 (Veteran), or 3 (Elite). The defender's morale is revealed the first time they're attacked.</p>
