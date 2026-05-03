@@ -60,7 +60,8 @@ Designed to reward what this player is already great at: spatial reasoning, ment
   - `+2` → defender retreats 1 square
   - `≥ +3` → defender broken (loses 2 strength, retreats 2 squares)
 - **Defender's hidden morale revealed at first attack against it.**
-- **Victory conditions** are scenario-specific. Examples: eliminate enemy general, hold a hill for N turns, capture a town, reduce total enemy strength below threshold, survive turn limit.
+- **Victory conditions** are scenario-specific. Examples: eliminate a named unit (e.g., a general), hold a hill for N turns, capture a town, reduce total enemy strength below threshold, survive turn limit.
+- **Generals are modeled as named Unit instances**, not a separate `UnitType` — `id: 'fr-napoleon'`, `name: 'Napoleon'`, with a normal type (e.g., `light-cavalry`) and elevated stats. Victory conditions reference them by `id`.
 
 ### 3.2 Campaign layer
 
@@ -148,8 +149,9 @@ tests/
 
 ```ts
 startCampaign(): GameState
-applyDecision(state: GameState, optionIndex: number): GameState
-beginBattle(state: GameState): GameState
+pendingDecision(state: GameState): Decision | null   // for the upcoming scenario, if any
+applyDecision(state: GameState, optionIndex: number): GameState  // applies pendingDecision
+beginBattle(state: GameState): GameState               // resolves the scenario file + any patches
 moveUnit(state, unitId, to): { state: GameState; events: BattleEvent[] }
 attack(state, attackerId, defenderId): { state: GameState; events: BattleEvent[] }
 changeFormation(state, unitId, to: Formation): { state: GameState; events: BattleEvent[] }
@@ -201,8 +203,25 @@ interface Scenario {
 }
 
 interface Decision {
+  id: string;                       // unique within campaign — used in save log
   promptMd: string;
-  options: { label: string; modifyScenario: (s: Scenario) => Scenario }[];
+  options: DecisionOption[];
+}
+
+interface DecisionOption {
+  label: string;
+  patch: ScenarioPatch;             // pure data, must be JSON-safe
+}
+
+// ScenarioPatch is a declarative override applied to the next scenario
+// before play begins. Pure data — no functions — so saves can replay it.
+interface ScenarioPatch {
+  unitsAdded?: Unit[];
+  unitsRemovedByIds?: string[];
+  unitOverrides?: Array<Partial<Unit> & { id: string }>;
+  tilesOverridden?: Tile[];
+  victoryOverride?: VictoryCondition[];
+  turnLimitOverride?: number;
 }
 
 interface GameState {
@@ -216,6 +235,7 @@ interface GameState {
   phase: 'orders' | 'combat' | 'end-of-turn';
   selectedUnitId: string | null;
   log: BattleEvent[];
+  decisionsTaken: { decisionId: string; optionIndex: number }[];
   outcomes: { scenarioId: string; victor: Side; turnsTaken: number }[];
 }
 ```
@@ -224,7 +244,8 @@ interface GameState {
 
 - One `localStorage` key per campaign run: `napoleonic-save-<runId>`.
 - Up to 3 saved runs visible in the menu; older runs auto-pruned.
-- Save format = JSON serialization of `GameState` directly (no translation layer).
+- **Save format = JSON serialization of `GameState` directly** (no translation layer). Because every field of `GameState` is JSON-safe (including `decisionsTaken`, which references decisions by id rather than carrying their option patches), the save survives roundtrip without a custom (de)serializer.
+- **Decisions on resume:** the save records `{decisionId, optionIndex}`; on load, the engine looks up the corresponding `Decision` in the in-memory scenario file and re-applies its `ScenarioPatch`. Decision text and patches live in code, not in the save — so revising a dispatch's wording doesn't break old saves.
 - `schemaVersion: 1` on every saved game. If the running engine sees an unrecognised version, the menu shows: *"We updated the game; old saves can't be continued — start fresh?"* — never silently corrupt.
 - The cumulative `events` array is the replay log. Replay viewer steps forward/backward through events on a frozen-board view.
 
