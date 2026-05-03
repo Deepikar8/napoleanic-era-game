@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Pos, Formation, Scenario } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
 import { runAiTurn } from '../engine/ai';
+import { replayUpTo, eventUnitIds } from '../engine/replay';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
 import { playTurnDrum, playFifeFlourish, setMuted as soundSetMuted } from '../sound';
@@ -23,6 +24,8 @@ interface Store {
   muted: boolean;
   showDetails: boolean;
   errorMessage: string | null;
+  isAnimating: boolean;
+  animatingHighlightIds: string[];
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -53,6 +56,8 @@ export const useGame = create<Store>((set, get) => ({
   muted: false,
   showDetails: false,
   errorMessage: null,
+  isAnimating: false,
+  animatingHighlightIds: [],
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -78,6 +83,7 @@ export const useGame = create<Store>((set, get) => ({
   hoverEnemy(id) { set({ hoveredEnemyId: id }); },
 
   doMove(to) {
+    if (get().isAnimating) return;
     const { state, scenario, selectedUnitId, history } = get();
     if (!state || !scenario || !selectedUnitId) return;
     try {
@@ -88,6 +94,7 @@ export const useGame = create<Store>((set, get) => ({
   },
 
   doAttack(defenderId) {
+    if (get().isAnimating) return;
     const { state, selectedUnitId, history } = get();
     if (!state || !selectedUnitId) return;
     try {
@@ -97,6 +104,7 @@ export const useGame = create<Store>((set, get) => ({
   },
 
   doFormation(to) {
+    if (get().isAnimating) return;
     const { state, selectedUnitId, history } = get();
     if (!state || !selectedUnitId) return;
     try {
@@ -106,6 +114,7 @@ export const useGame = create<Store>((set, get) => ({
   },
 
   doEndTurn() {
+    if (get().isAnimating) return;
     const { state, scenario, runId } = get();
     if (!state || !scenario) return;
     playTurnDrum();
@@ -124,14 +133,60 @@ export const useGame = create<Store>((set, get) => ({
         after.state.currentSide !== 'french' &&
         after.solo &&
         after.screen === 'battle') {
-      const ai = runAiTurn(after.state, after.scenario);
-      const v2 = checkVictory(ai.state, after.scenario.victory);
-      set({
-        state: ai.state, history: [ai.state],
-        screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
-      });
-      if (v2.kind === 'decided') playFifeFlourish();
-      if (runId) get().saveCurrent();
+
+      const aiScenario = after.scenario;
+      const stateBeforeAi = after.state;
+      const ai = runAiTurn(stateBeforeAi, aiScenario);
+      const v2 = checkVictory(ai.state, aiScenario.victory);
+
+      const startIdx = stateBeforeAi.log.length;       // first new event index
+      const endIdx = ai.state.log.length - 1;          // last event index in final log
+
+      // No new events to animate — apply directly.
+      if (endIdx < startIdx) {
+        set({
+          state: ai.state, history: [ai.state],
+          screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
+        });
+        if (v2.kind === 'decided') playFifeFlourish();
+        if (runId) get().saveCurrent();
+        return;
+      }
+
+      set({ isAnimating: true, animatingHighlightIds: [] });
+
+      const fullLog = ai.state.log;
+      let i = startIdx;
+      const stepDelay = 600;
+
+      const finish = () => {
+        set({
+          state: ai.state, history: [ai.state],
+          screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
+          isAnimating: false, animatingHighlightIds: [],
+        });
+        if (v2.kind === 'decided') playFifeFlourish();
+        if (runId) get().saveCurrent();
+      };
+
+      const tick = () => {
+        // Bail out if the player navigated away or a new run started mid-animation.
+        const cur = get();
+        if (!cur.isAnimating || cur.scenario !== aiScenario) return;
+
+        const ev = fullLog[i];
+        const intermediate = replayUpTo(aiScenario, stateBeforeAi.decisionsTaken, fullLog, i);
+        set({ state: intermediate, animatingHighlightIds: eventUnitIds(ev) });
+
+        if (i >= endIdx) {
+          setTimeout(finish, stepDelay);
+          return;
+        }
+        i++;
+        setTimeout(tick, stepDelay);
+      };
+
+      setTimeout(tick, stepDelay);
     }
   },
 

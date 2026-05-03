@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.3.0 — 2026-05-03
+
+The "make AI moves visible" pass + coalition smoke test.
+
+### Added
+- **Animated AI turns in solo mode.** Previously the AI ran synchronously inside `doEndTurn` and the board jumped to a final state with no narrative. Now the engine still runs in one shot, but the store steps the displayed state through each AI-generated event with a 600ms delay (using the v1.2.0 replay rebuilder), highlighting the unit involved at each step.
+- **"Coalition is moving…" status banner** under the board during the animation. Action-bar buttons disable during animation so accidental taps don't queue up.
+- **Store guards on player actions during animation.** `doMove` / `doAttack` / `doFormation` / `doEndTurn` early-return when `isAnimating` so dispatched events from the UI don't corrupt the in-flight animation.
+- **Coalition turn smoke tests** (5 new tests in `turn.test.ts`): handover french → austrian, both partners can act on the same turn, partners can't attack each other, flags reset on next coalition turn, french locked out during coalition.
+
+### Changed
+- Header label shows **"COALITION"** instead of **"AUSTRIAN"** when the scenario has both Austrian and Russian units, so the player understands russian units are also active.
+
 ## v1.2.2 — 2026-05-03
 
 Found by playtest.

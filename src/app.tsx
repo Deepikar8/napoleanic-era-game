@@ -40,6 +40,7 @@ function BattleScreen() {
     state, scenario, selectedUnitId, hoveredEnemyId,
     selectUnit, hoverEnemy, doMove, doAttack, doFormation, doEndTurn, undo,
     saveCurrent, toggleHelp, showDetails, toggleDetails,
+    isAnimating, animatingHighlightIds,
   } = useGame();
 
   useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
@@ -90,24 +91,30 @@ function BattleScreen() {
           selectedUnitId={selectedUnitId}
           hoveredEnemyId={hoveredEnemyId}
           showDetails={showDetails}
+          highlightUnitIds={animatingHighlightIds}
           onSelectUnit={selectUnit}
           onMoveTo={doMove}
           onAttack={doAttack}
           onHoverEnemy={hoverEnemy}
         />
+        {isAnimating && (
+          <div className="mt-2 self-center bg-ink text-parchment px-4 py-2 rounded shadow text-sm font-semibold pointer-events-none">
+            {sideLabel === 'coalition' ? 'Coalition' : sideLabel.charAt(0).toUpperCase() + sideLabel.slice(1)} is moving…
+          </div>
+        )}
         <div className="mt-3 flex gap-2 items-center">
-          <Button onClick={undo} kind="secondary">Undo</Button>
-          <Button onClick={toggleHelp} kind="secondary">?</Button>
-          <Button onClick={toggleDetails} kind="secondary">{showDetails ? 'Hide details' : 'Show details'}</Button>
+          <Button onClick={undo} kind="secondary" disabled={isAnimating}>Undo</Button>
+          <Button onClick={toggleHelp} kind="secondary" disabled={isAnimating}>?</Button>
+          <Button onClick={toggleDetails} kind="secondary" disabled={isAnimating}>{showDetails ? 'Hide details' : 'Show details'}</Button>
           <div className="flex-1" />
-          {selected && (
+          {selected && !isAnimating && (
             <>
               <Button onClick={() => doFormation('line')}   kind="secondary">Line</Button>
               <Button onClick={() => doFormation('column')} kind="secondary">Column</Button>
               <Button onClick={() => doFormation('square')} kind="secondary">Square</Button>
             </>
           )}
-          <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'}>
+          <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'} disabled={isAnimating}>
             {endTurnArmed
               ? (unspentCount > 0 ? `End anyway? (${unspentCount} unspent)` : 'Confirm end turn')
               : 'End Turn'}
