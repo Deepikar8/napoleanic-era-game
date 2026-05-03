@@ -98,7 +98,7 @@ export const useGame = create<Store>((set, get) => ({
   helpOpen: false,
   solo: false,
   muted: false,
-  showDetails: false,
+  showDetails: true,
   aiDifficulty: 'normal',
   errorMessage: null,
   isAnimating: false,

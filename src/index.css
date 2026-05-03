@@ -20,3 +20,13 @@ html { font-size: 16px; }
 .animate-banner {
   animation: banner-in 900ms cubic-bezier(.2,.8,.3,1.2) both;
 }
+
+/* Objective flag — gentle pulse to draw the kid's eye to unmet goals. */
+@keyframes objective-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.animate-objective {
+  animation: objective-pulse 1800ms ease-in-out infinite;
+  transform-origin: center;
+}

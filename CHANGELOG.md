@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.12.0 — 2026-05-03
+
+UI/visual pass — moving information from side panels onto the board.
+
+### Added
+- **Objective markers on the board.** Every French `capture-tile` and `hold-tile-for-turns` victory tile now shows a gold flag with a dashed laurel ring on its cell. Unmet objectives gently pulse (1800ms ease-in-out) to draw the eye; met objectives turn green with a ✓. Recursively expands `all-of` so all four Ulm road tiles are individually flagged. The kid sees *where to go* without reading.
+- **Active-unit indicator.** Units that can still act this turn (current side, not fully spent) now have a thicker green border. Selected/highlighted units still show the gold border. Combined with the existing dim-on-spent, the kid can tell at a glance which of his pieces are still useful.
+- **Revealed morale stars on the unit cell.** Once an enemy's morale is revealed by the first attack, ★ / ★★ / ★★★ appears in the top-right corner of the cell with a dark stroke for legibility. No more digging into the side panel — the morale data lives where the kid is looking.
+
+### Changed
+- **Formation glyphs (—/⋮/▢) and facing triangles visible by default.** `showDetails` now defaults to `true`. The "Hide details" toggle remains in the action bar for kids who want a cleaner board.
+
 ## v1.11.0 — 2026-05-03
 
 Two big-engine pieces from the design review.

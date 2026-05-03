@@ -1,10 +1,35 @@
 import { useState } from 'react';
-import type { GameState, Pos, Scenario, TerrainKind, Unit } from '../engine/types';
+import type { GameState, Pos, Scenario, TerrainKind, Unit, VictoryCondition } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
 import { isOnActiveSide, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
+
+interface ObjectiveMarker { pos: Pos; kind: 'capture' | 'hold'; met: boolean; }
+
+// Flatten the victory tree (handles all-of) into a list of tile-based French objectives.
+function frenchObjectiveTiles(state: GameState, conds: VictoryCondition[]): ObjectiveMarker[] {
+  const out: ObjectiveMarker[] = [];
+  const walk = (c: VictoryCondition) => {
+    if (c.for !== 'french') return;
+    if (c.kind === 'capture-tile') {
+      const pos = c.args.pos as Pos;
+      const met = state.units.some(u => u.side === 'french' && posEq(u.position, pos));
+      out.push({ pos, kind: 'capture', met });
+    } else if (c.kind === 'hold-tile-for-turns') {
+      const pos = c.args.pos as Pos;
+      const turns = c.args.turns as number;
+      const standing = state.units.some(u => u.side === 'french' && posEq(u.position, pos));
+      out.push({ pos, kind: 'hold', met: standing && state.turn > turns });
+    } else if (c.kind === 'all-of') {
+      const subs = c.args.conditions as VictoryCondition[];
+      for (const s of subs) walk(s);
+    }
+  };
+  for (const c of conds) walk(c);
+  return out;
+}
 
 const TERRAIN_FILL: Record<string, string> = {
   plain: '#e8dfc3', forest: '#6b8a4a', hill: '#c4a878',
@@ -92,6 +117,8 @@ export function BattleBoard(p: BattleBoardProps) {
     : [];
   const enemySet = new Set(adjacentEnemies.map(u => u.id));
 
+  const objectives = frenchObjectiveTiles(state, scenario.victory);
+
   return (
     <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto bg-parchmentDark border border-ink/40">
@@ -121,6 +148,36 @@ export function BattleBoard(p: BattleBoardProps) {
         })
       )}
 
+      {/* French objective markers — drawn between tiles and units so units sit on top */}
+      {objectives.map((o, idx) => {
+        const cx = o.pos.x * cellSize + cellSize / 2;
+        const cy = o.pos.y * cellSize + cellSize / 2;
+        const fillColor = o.met ? '#3a8a3a' : '#d4a017';
+        const strokeColor = o.met ? '#1f4a1f' : '#7a5a08';
+        return (
+          <g key={`obj-${idx}`} pointerEvents="none" className={o.met ? '' : 'animate-objective'}>
+            {/* Outer ring — laurel-style */}
+            <circle cx={cx} cy={cy} r={cellSize * 0.42}
+                    fill="none" stroke={strokeColor} strokeWidth={1.5}
+                    strokeDasharray="3 3" opacity={0.85} />
+            {/* Flag pole + flag */}
+            <line x1={cx} y1={cy - 14} x2={cx} y2={cy + 8}
+                  stroke={strokeColor} strokeWidth={1.5} />
+            <polygon
+              points={`${cx},${cy - 14} ${cx + 12},${cy - 10} ${cx},${cy - 6}`}
+              fill={fillColor} stroke={strokeColor} strokeWidth={0.8}
+            />
+            {/* Tick when met */}
+            {o.met && (
+              <text x={cx} y={cy + 5} textAnchor="middle"
+                    fontSize="13" fontWeight="700" fill="#1f4a1f">
+                ✓
+              </text>
+            )}
+          </g>
+        );
+      })}
+
       {/* Units */}
       {state.units.map(u => {
         const cx = u.position.x * cellSize;
@@ -129,6 +186,7 @@ export function BattleBoard(p: BattleBoardProps) {
         const isHighlighted = !!p.highlightUnitIds?.includes(u.id);
         const isAttackable = enemySet.has(u.id);
         const isSpent = canAct(u.side) && u.hasActed === true && u.hasMoved === true;
+        const isReady = canAct(u.side) && !isSpent;   // active side, still has actions
         const onClick = () => {
           if (!isAttackable) { p.onSelectUnit(u.id); return; }
           if (hoveredEnemyId === u.id) p.onAttack(u.id);
@@ -157,8 +215,12 @@ export function BattleBoard(p: BattleBoardProps) {
               width={cellSize - 8} height={cellSize - 8}
               rx="3"
               fill={SIDE_FILL[u.side]}
-              stroke={isSelected || isHighlighted ? '#d4a017' : 'rgba(0,0,0,0.3)'}
-              strokeWidth={isSelected || isHighlighted ? 3 : 1.2}
+              stroke={
+                isSelected || isHighlighted ? '#d4a017'        // gold — selected / highlighted
+                : isReady                    ? '#3a8a3a'        // green — active side, can still act
+                                             : 'rgba(0,0,0,0.3)'
+              }
+              strokeWidth={isSelected || isHighlighted ? 3 : isReady ? 2.4 : 1.2}
             />
             <g transform={`translate(${(cellSize - 8) * 0.1}, ${(cellSize - 8) * 0.1}) scale(${(cellSize - 8) * 0.032})`}
                style={{ color: SIDE_TEXT[u.side] }}>
@@ -178,6 +240,19 @@ export function BattleBoard(p: BattleBoardProps) {
                   fontSize="9" fontWeight="700" fill="#2a2018">
               {u.strength}
             </text>
+            {/* Revealed morale — top-right corner. Hidden until first attack. */}
+            {u.moraleRevealed && (
+              <text
+                x={cellSize - 11} y={11}
+                textAnchor="end"
+                fontSize="9" fontWeight="700"
+                fill="#d4a017"
+                stroke="#1a120a" strokeWidth={0.4}
+                paintOrder="stroke"
+              >
+                {'★'.repeat(u.morale)}
+              </text>
+            )}
             {p.showDetails && (
               <>
                 {/* Formation glyph */}
