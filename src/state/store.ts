@@ -21,6 +21,7 @@ interface Store {
   helpOpen: boolean;
   solo: boolean;
   muted: boolean;
+  errorMessage: string | null;
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -38,6 +39,8 @@ interface Store {
   toggleHelp(): void;
   setSolo(b: boolean): void;
   setMuted(b: boolean): void;
+  flashError(msg: string): void;
+  clearError(): void;
 }
 
 export const useGame = create<Store>((set, get) => ({
@@ -46,6 +49,7 @@ export const useGame = create<Store>((set, get) => ({
   helpOpen: false,
   solo: false,
   muted: false,
+  errorMessage: null,
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -77,7 +81,7 @@ export const useGame = create<Store>((set, get) => ({
       const r = moveUnit(state, selectedUnitId, to,
         { tiles: scenario.tiles, grid: scenario.grid });
       set({ state: r.state, history: [...history, r.state] });
-    } catch (e) { console.warn(e); }
+    } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 
   doAttack(defenderId) {
@@ -86,7 +90,7 @@ export const useGame = create<Store>((set, get) => ({
     try {
       const r = attack(state, selectedUnitId, defenderId);
       set({ state: r.state, history: [...history, r.state], selectedUnitId: null });
-    } catch (e) { console.warn(e); }
+    } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 
   doFormation(to) {
@@ -95,7 +99,7 @@ export const useGame = create<Store>((set, get) => ({
     try {
       const r = changeFormation(state, selectedUnitId, to);
       set({ state: r.state, history: [...history, r.state] });
-    } catch (e) { console.warn(e); }
+    } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 
   doEndTurn() {
@@ -144,6 +148,13 @@ export const useGame = create<Store>((set, get) => ({
   toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
   setSolo(b) { set({ solo: b }); },
   setMuted(b) { soundSetMuted(b); set({ muted: b }); },
+  flashError(msg) {
+    set({ errorMessage: msg });
+    setTimeout(() => {
+      if (useGame.getState().errorMessage === msg) set({ errorMessage: null });
+    }, 2200);
+  },
+  clearError() { set({ errorMessage: null }); },
 
   advanceAfterBattle() {
     const { state, scenario, runId } = get();

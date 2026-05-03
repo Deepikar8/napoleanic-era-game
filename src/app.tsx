@@ -7,6 +7,7 @@ import { ReplayViewer } from './ui/ReplayViewer';
 import { DispatchScreen } from './ui/DispatchScreen';
 import { HelpOverlay } from './ui/HelpOverlay';
 import { CampaignEndScreen } from './ui/CampaignEndScreen';
+import { ErrorToast } from './ui/ErrorToast';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
@@ -29,7 +30,7 @@ export default function App() {
     case 'campaign-end':   body = <CampaignEndScreen />; break;
     default:               body = <Splash />;
   }
-  return (<>{body}<HelpOverlay /></>);
+  return (<>{body}<HelpOverlay /><ErrorToast /></>);
 }
 
 function BattleScreen() {
