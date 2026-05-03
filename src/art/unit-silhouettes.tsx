@@ -1,3 +1,5 @@
+import type { UnitType } from '../engine/types';
+
 export function UnitSpriteDefs() {
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
@@ -95,4 +97,4 @@ export function UnitSpriteDefs() {
   );
 }
 
-export const unitSilhouetteId = (type: string): string => `silh-${type}`;
+export const unitSilhouetteId = (type: UnitType): string => `silh-${type}`;
