@@ -109,7 +109,7 @@ function BattleScreen() {
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">
           <div>
             <span className="font-bold uppercase">{sideLabel}</span>
-            <span className="ml-3 text-sm">Turn {state.turn} / {scenario.turnLimit ?? '∞'}</span>
+            <span className="ml-3 text-sm">Turn {state.turn} of {scenario.turnLimit ?? '∞'}</span>
           </div>
           <div className="text-xs opacity-80">{scenario.title}</div>
         </header>
@@ -157,7 +157,9 @@ function BattleScreen() {
           )}
           <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'} disabled={isAnimating}>
             {endTurnArmed
-              ? (unspentCount > 0 ? `End anyway? (${unspentCount} unspent)` : 'Confirm end turn')
+              ? (unspentCount > 0
+                  ? `Confirm? ${unspentCount} ${unspentCount === 1 ? 'unit hasn’t' : 'units haven’t'} acted yet`
+                  : 'Confirm end turn')
               : 'End Turn'}
           </Button>
         </div>

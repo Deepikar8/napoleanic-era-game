@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.1 — 2026-05-03
+
+Reported by playtester: "I don't clearly understand the rules, how many turns we have, what does it mean when you said end anyway"
+
+### Changed
+- **End Turn confirmation wording.** "End anyway? (3 unspent)" → "Confirm? 3 units haven't acted yet" (or "1 unit hasn't acted yet"). The previous label hid the meaning behind jargon.
+- **Header turn counter.** "Turn 4 / 8" → "Turn 4 of 8" — reads more naturally.
+- **New help section: "Turns &amp; ending your turn".** Explains what a turn is, what the turn limit does, what "Confirm? N units haven't acted yet" means, and points at the objective chips. Placed at the top of the overlay since it's the question new players hit first.
+
 ## v1.6.0 — 2026-05-03
 
 The "polish the rest of the open list" pass.

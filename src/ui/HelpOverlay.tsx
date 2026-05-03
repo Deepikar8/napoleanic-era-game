@@ -14,6 +14,15 @@ export function HelpOverlay() {
           <Button kind="secondary" onClick={toggleHelp}>Close</Button>
         </header>
 
+        <h3 className="font-bold mt-4">Turns &amp; ending your turn</h3>
+        <p className="text-sm">Each battle has a <strong>turn limit</strong> — shown in the top bar as <em>Turn X / Y</em>. One turn is one round where each side gets to move and attack with their units.</p>
+        <ul className="list-disc list-inside text-sm mt-2">
+          <li>On your turn, every unit can <strong>move</strong> once and <strong>attack/change formation</strong> once. A unit that has done both fades out.</li>
+          <li>Hit <strong>End Turn</strong> when you're done. The button asks for confirmation — and warns you if you have units that haven't acted yet (<em>"Confirm? 3 units haven't acted yet"</em> means you'd be wasting their turn). Tap again to confirm, or anywhere else to cancel.</li>
+          <li>If the turn limit runs out, victory conditions decide who wins. <em>Survive to turn N</em> means the defender wins if no one has lost first; a hit-and-hold goal needs you to capture the tile <em>before</em> the limit.</li>
+          <li>Look at the small chips above the board — they show your French objectives and how close you are to each.</li>
+        </ul>
+
         <h3 className="font-bold mt-4">Combat</h3>
         <p>Combat compares <code>strength + terrain + flank + formation + morale</code> on each side. Larger gap is better for the higher side.</p>
         <table className="text-sm border w-full mt-2 mb-3">
