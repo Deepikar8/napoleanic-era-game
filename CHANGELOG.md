@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.4.0 — 2026-05-03
+
+The "harder AI" pass.
+
+### Changed
+- **AI uses combat math.** Each AI unit now scores every adjacent enemy with the same `previewAttack` the human sees and picks the best-gap target instead of attacking whichever was found first. Tie-breaks toward lower-strength enemies (higher elimination chance).
+- **AI no longer commits suicide.** If every adjacent target has a predicted gap ≤ −2 (attacker breaks), the unit holds instead of throwing itself away.
+- **AI infantry forms square against adjacent cavalry.** Trades the action for a defensive +2 vs cavalry — usually a better deal than a losing attack.
+
+### Fixed
+- **AI no longer treats coalition partners as enemies.** `nearestEnemy` previously used `u.side !== unit.side`, so an Austrian AI unit at Austerlitz would have walked toward a Russian one as if it were an enemy. Now uses team-aware logic; austrian + russian count as one team.
+
+### Added
+- 3 new AI tests: skips suicidal attacks, switches to square vs cavalry, picks the best-gap target among multiple adjacents.
+
 ## v1.3.1 — 2026-05-03
 
 ### Fixed

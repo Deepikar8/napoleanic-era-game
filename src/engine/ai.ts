@@ -1,10 +1,20 @@
-import type { GameState, Scenario, Unit, BattleEvent, Pos } from './types';
+import type { GameState, Scenario, Unit, BattleEvent, Pos, Side } from './types';
 import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { moveUnit, attack, changeFormation, endTurn } from './turn';
+import { previewAttack } from './preview';
+
+const COALITION: Side[] = ['austrian', 'russian'];
+const sameTeam = (a: Side, b: Side) =>
+  (a === 'french' && b === 'french') ||
+  (COALITION.includes(a) && COALITION.includes(b));
+
+const isCavalry = (t: Unit['type']) => t === 'light-cavalry' || t === 'heavy-cavalry';
+const isInfantry = (t: Unit['type']) =>
+  t === 'line-infantry' || t === 'light-infantry' || t === 'grenadier';
 
 const nearestEnemy = (unit: Unit, units: Unit[]): Unit | null => {
-  const enemies = units.filter(u => u.side !== unit.side);
+  const enemies = units.filter(u => !sameTeam(u.side, unit.side));
   if (enemies.length === 0) return null;
   return enemies.reduce((best, e) =>
     chebyshev(unit.position, e.position) < chebyshev(unit.position, best.position) ? e : best
@@ -50,32 +60,63 @@ export function runAiTurn(
     }
   }
 
-  // Per-unit general rule for the active side
+  // Per-unit decision loop
   const activeUnits = s.units.filter(u => u.side === s.currentSide && !u.hasActed);
   for (const unit of activeUnits) {
-    const enemy = nearestEnemy(unit, s.units);
-    if (!enemy) break;
+    // Refresh "current" view of this unit, since previous iterations may have changed strengths.
+    const cur = s.units.find(u => u.id === unit.id);
+    if (!cur) continue;        // unit was eliminated mid-turn
 
-    if (chebyshev(unit.position, enemy.position) === 1) {
-      // attack if possible
+    const adjEnemies = s.units.filter(o =>
+      !sameTeam(o.side, cur.side) && chebyshev(o.position, cur.position) === 1);
+
+    // 1. Defensive formation switch — infantry threatened by adjacent cavalry forms square.
+    //    Spends the action; the +2 vs cavalry usually outvalues a single attack.
+    if (isInfantry(cur.type) && cur.formation !== 'square' &&
+        adjEnemies.some(e => isCavalry(e.type)) && !cur.hasActed) {
       try {
-        const r = attack(s, unit.id, enemy.id);
+        const r = changeFormation(s, cur.id, 'square');
         s = r.state; events.push(...r.events);
-      } catch { /* skip */ }
-      continue;
+        continue;
+      } catch { /* fall through */ }
     }
 
-    if (scenario.ai.generalRule === 'defensive') {
-      // don't advance
-      continue;
+    // 2. Pick the best adjacent target via preview math; skip suicidal attacks.
+    if (adjEnemies.length > 0 && !cur.hasActed) {
+      let bestTarget: Unit | null = null;
+      let bestGap = -Infinity;
+      for (const e of adjEnemies) {
+        const p = previewAttack(cur, e, s.units, scenario.tiles);
+        const gap = p.attackerScore - p.defenderScore;
+        // Tie-break: prefer the lower-strength enemy (more chance of elimination).
+        if (gap > bestGap || (gap === bestGap && bestTarget && e.strength < bestTarget.strength)) {
+          bestGap = gap;
+          bestTarget = e;
+        }
+      }
+      // gap >= -1 covers exchange, defender retreats, defender broken, attacker repulsed (1 loss).
+      // Avoid gap <= -2 (attacker breaks, costs 2 strength + retreat).
+      if (bestTarget && bestGap >= -1) {
+        try {
+          const r = attack(s, cur.id, bestTarget.id);
+          s = r.state; events.push(...r.events);
+          continue;
+        } catch { /* skip */ }
+      }
+      // Adjacent enemies but none worth fighting — defensive units hold; aggressive may still try
+      // to reposition next turn. Either way, don't attack.
+      if (scenario.ai.generalRule === 'defensive') continue;
     }
 
-    if (scenario.ai.generalRule === 'aggressive' && !unit.hasMoved) {
-      const moves = legalMoves(unit, s.units, scenario);
-      const target = stepToward(unit.position, enemy.position, moves);
+    // 3. Movement (aggressive only — defensive sits)
+    if (scenario.ai.generalRule === 'aggressive' && !cur.hasMoved) {
+      const enemy = nearestEnemy(cur, s.units);
+      if (!enemy) break;
+      const moves = legalMoves(cur, s.units, scenario);
+      const target = stepToward(cur.position, enemy.position, moves);
       if (target) {
         try {
-          const r = moveUnit(s, unit.id, target,
+          const r = moveUnit(s, cur.id, target,
             { tiles: scenario.tiles, grid: scenario.grid });
           s = r.state; events.push(...r.events);
         } catch { /* skip */ }
