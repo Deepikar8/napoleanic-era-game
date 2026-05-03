@@ -5,6 +5,7 @@ import { posEq } from './types';
 import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { resolveAttack } from './combat';
+import { applyPatch } from './patch';
 
 const COALITION: Side[] = ['austrian', 'russian'];
 
@@ -28,22 +29,52 @@ const areSameTeam = (a: Side, b: Side): boolean =>
   (a === 'french' && b === 'french') ||
   (COALITION.includes(a) && COALITION.includes(b));
 
-export function beginBattle(scenario: Scenario): GameState {
+export function beginBattle(
+  scenario: Scenario,
+  takenDecisions: GameState['decisionsTaken'] = [],
+): GameState {
+  let s = scenario;
+  if (s.preBattleDecision) {
+    const taken = takenDecisions.find(d => d.decisionId === s.preBattleDecision!.id);
+    if (taken) {
+      s = applyPatch(s, s.preBattleDecision.options[taken.optionIndex].patch);
+    }
+  }
   return {
     schemaVersion: 1,
     campaignId: 'ulm-austerlitz-1805',
     scenarioIndex: 0,
-    scenarioId: scenario.id,
-    units: scenario.units.map(u => ({ ...u })),
+    scenarioId: s.id,
+    units: s.units.map(u => ({ ...u })),
     currentSide: 'french',
     turn: 1,
     phase: 'orders',
     selectedUnitId: null,
     log: [{ kind: 'turn-started', turn: 1, side: 'french' }],
-    decisionsTaken: [],
+    decisionsTaken: takenDecisions,
     outcomes: [],
     pendingDecisionId: null,
   };
+}
+
+export function applyDecisionToScenario(
+  scenario: Scenario,
+  state: GameState,
+  optionIndex: number,
+): { scenario: Scenario; state: GameState } {
+  const decision = scenario.preBattleDecision;
+  if (!decision) return { scenario, state };
+  if (state.decisionsTaken.some(d => d.decisionId === decision.id)) {
+    return { scenario, state };
+  }
+  const opt = decision.options[optionIndex];
+  if (!opt) throw new Error(`Decision option ${optionIndex} out of range`);
+  const patched = applyPatch(scenario, opt.patch);
+  const newState: GameState = {
+    ...state,
+    decisionsTaken: [...state.decisionsTaken, { decisionId: decision.id, optionIndex }],
+  };
+  return { scenario: patched, state: newState };
 }
 
 function facingFromMove(from: Pos, to: Pos, fallback: Unit['facing']): Unit['facing'] {

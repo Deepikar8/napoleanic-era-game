@@ -4,3 +4,4 @@ export * from './movement';
 export * from './combat';
 export * from './victory';
 export * from './turn';
+export * from './patch';
