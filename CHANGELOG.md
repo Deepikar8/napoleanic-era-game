@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.2.0 — 2026-05-03
+
+The "less to parse" pass — visual clarity and replay polish.
+
+### Added
+- **Animated replay.** The Replay screen now renders the battle board at the active event's state by reapplying log events to the scenario's initial state. Involved units get a gold highlight ring. Click any log entry to jump to it; new ⏮ Start / End ⏭ buttons. A new engine test verifies the rebuilt state matches the engine's actual state at every snapshot.
+- **Show details toggle** in the action bar. Formation glyph (—/⋮/▢) and facing triangle now hidden by default; flip the toggle when the player wants tactical detail.
+- **Terrain tooltip.** Tap (or hover) a tile when no unit is selected to see terrain name, effect, and any occupying unit. Auto-dismisses when a unit is picked.
+- **"Acted" indicator.** Units that have used both their move and their action this turn render at 0.45 opacity, so the active player can see at a glance which still have actions left.
+- **highlightUnitIds prop on BattleBoard** for replay-style highlighting.
+
+### Changed
+- Splash "Continue" button shows the scenario title (e.g. "Continue: Haslach-Jungingen — 11 October 1805 · turn 5") instead of the raw id.
+- Campaign End screen results list shows scenario titles instead of raw ids.
+
 ## v1.1.0 — 2026-05-03
 
 The "playable for real" pass — discoverability and forgiveness fixes.
