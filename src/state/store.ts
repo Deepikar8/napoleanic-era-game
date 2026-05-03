@@ -105,28 +105,44 @@ export const useGame = create<Store>((set, get) => ({
     try {
       const r = moveUnit(state, selectedUnitId, to,
         { tiles: scenario.tiles, grid: scenario.grid });
-      set({ state: r.state, history: [...history, r.state] });
+      const v = checkVictory(r.state, scenario.victory);
+      set({
+        state: r.state, history: [...history, r.state],
+        screen: v.kind === 'decided' ? 'battle-end' : 'battle',
+      });
+      if (v.kind === 'decided') playFifeFlourish();
     } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 
   doAttack(defenderId) {
     if (get().isAnimating) return;
-    const { state, selectedUnitId, history } = get();
-    if (!state || !selectedUnitId) return;
+    const { state, scenario, selectedUnitId, history } = get();
+    if (!state || !scenario || !selectedUnitId) return;
     try {
       const r = attack(state, selectedUnitId, defenderId);
       for (const ev of r.events) playEventSound(ev);
-      set({ state: r.state, history: [...history, r.state], selectedUnitId: null });
+      const v = checkVictory(r.state, scenario.victory);
+      set({
+        state: r.state, history: [...history, r.state],
+        selectedUnitId: null,
+        screen: v.kind === 'decided' ? 'battle-end' : 'battle',
+      });
+      if (v.kind === 'decided') playFifeFlourish();
     } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 
   doFormation(to) {
     if (get().isAnimating) return;
-    const { state, selectedUnitId, history } = get();
-    if (!state || !selectedUnitId) return;
+    const { state, scenario, selectedUnitId, history } = get();
+    if (!state || !scenario || !selectedUnitId) return;
     try {
       const r = changeFormation(state, selectedUnitId, to);
-      set({ state: r.state, history: [...history, r.state] });
+      const v = checkVictory(r.state, scenario.victory);
+      set({
+        state: r.state, history: [...history, r.state],
+        screen: v.kind === 'decided' ? 'battle-end' : 'battle',
+      });
+      if (v.kind === 'decided') playFifeFlourish();
     } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
 

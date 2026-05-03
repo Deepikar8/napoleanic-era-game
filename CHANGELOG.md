@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.7.1 — 2026-05-03
+
+Reported by playtester: "It does not let me end turn after winning, it is asking to confirm as I still have move".
+
+### Fixed
+- **Victory now transitions the screen immediately, not at end of turn.** `doMove` / `doAttack` / `doFormation` previously didn't run `checkVictory` — only `doEndTurn` did. So if the player eliminated the last enemy or captured a victory tile mid-turn, the battle screen stayed up; trying to end turn then asked "Confirm? N units can still move or attack" because there were still unspent units. Now every state-changing action checks victory and routes to the Battle End screen on a decision (with the fife flourish).
+
 ## v1.7.0 — 2026-05-03
 
 ### Added
