@@ -57,6 +57,11 @@ function BattleScreen() {
   const COALITION: Side[] = ['austrian', 'russian'];
   const sideCanAct = (side: Side) =>
     state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
+  const hasAustrian = scenario.units.some(u => u.side === 'austrian');
+  const hasRussian = scenario.units.some(u => u.side === 'russian');
+  const sideLabel = state.currentSide === 'french'
+    ? 'french'
+    : (hasAustrian && hasRussian ? 'coalition' : state.currentSide);
   const unspentCount = state.units.filter(u => sideCanAct(u.side) && !u.hasActed).length;
   const onEndTurn = () => {
     if (endTurnArmed) { setEndTurnArmed(false); doEndTurn(); }
@@ -73,7 +78,7 @@ function BattleScreen() {
       <div className="flex flex-col">
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">
           <div>
-            <span className="font-bold uppercase">{state.currentSide}</span>
+            <span className="font-bold uppercase">{sideLabel}</span>
             <span className="ml-3 text-sm">Turn {state.turn} / {scenario.turnLimit ?? '∞'}</span>
           </div>
           <div className="text-xs opacity-80">{scenario.title}</div>

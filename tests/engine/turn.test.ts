@@ -96,4 +96,75 @@ describe('turn manager', () => {
     expect(r.events).toContainEqual(expect.objectContaining({ kind: 'formation-changed', unitId: 'fr1' }));
     expect(() => changeFormation(r.state, 'fr1', 'column')).toThrow(/Already acted/);
   });
+
+  describe('coalition (austrian + russian) handover', () => {
+    const coalitionScenario: Scenario = {
+      id: 'co', title: 'Co', briefingMd: 'co',
+      grid: { width: 10, height: 10 }, tiles: [],
+      units: [
+        u({ id: 'fr1', side: 'french',  position: { x: 1, y: 1 } }),
+        u({ id: 'au1', side: 'austrian', position: { x: 5, y: 1 } }),
+        u({ id: 'ru1', side: 'russian',  position: { x: 5, y: 5 } }),
+      ],
+      victory: [
+        { for: 'french',  kind: 'eliminate-unit', args: { unitId: 'au1' } },
+        { for: 'austrian', kind: 'survive-turns', args: { turns: 5 } },
+        { for: 'russian',  kind: 'survive-turns', args: { turns: 5 } },
+      ],
+      ai: { generalRule: 'defensive', triggers: [] },
+    };
+
+    it('endTurn from french routes to austrian (first coalition side)', () => {
+      const state = beginBattle(coalitionScenario);
+      const after = endTurn(state).state;
+      expect(after.currentSide).toBe('austrian');
+      expect(after.turn).toBe(1);
+    });
+
+    it('during coalition turn, both austrian and russian units may move and attack', () => {
+      let s = beginBattle(coalitionScenario);
+      s = endTurn(s).state;
+      expect(s.currentSide).toBe('austrian');
+      // austrian unit moves
+      s = moveUnit(s, 'au1', { x: 4, y: 1 }).state;
+      expect(s.units.find(u => u.id === 'au1')!.position).toEqual({ x: 4, y: 1 });
+      // russian unit moves on the same turn — should NOT throw
+      s = moveUnit(s, 'ru1', { x: 5, y: 4 }).state;
+      expect(s.units.find(u => u.id === 'ru1')!.position).toEqual({ x: 5, y: 4 });
+    });
+
+    it('coalition cannot attack its own partner', () => {
+      const adj: Scenario = {
+        ...coalitionScenario,
+        units: [
+          u({ id: 'fr1', side: 'french',   position: { x: 0, y: 0 } }),
+          u({ id: 'au1', side: 'austrian', position: { x: 4, y: 4 } }),
+          u({ id: 'ru1', side: 'russian',  position: { x: 5, y: 4 } }),
+        ],
+      };
+      let s = beginBattle(adj);
+      s = endTurn(s).state;
+      expect(() => attack(s, 'au1', 'ru1')).toThrow(/friendly/);
+    });
+
+    it('coalition flags reset at the start of their next turn (full cycle)', () => {
+      let s = beginBattle(coalitionScenario);
+      s = endTurn(s).state;                                    // -> coalition T1
+      s = moveUnit(s, 'au1', { x: 4, y: 1 }).state;
+      s = moveUnit(s, 'ru1', { x: 5, y: 4 }).state;
+      expect(s.units.find(u => u.id === 'au1')!.hasMoved).toBe(true);
+      s = endTurn(s).state;                                    // -> french T2
+      s = endTurn(s).state;                                    // -> coalition T2 (reset point)
+      expect(s.currentSide).toBe('austrian');
+      expect(s.turn).toBe(2);
+      expect(s.units.find(u => u.id === 'au1')!.hasMoved).toBeFalsy();
+      expect(s.units.find(u => u.id === 'ru1')!.hasMoved).toBeFalsy();
+    });
+
+    it('french cannot move during coalition turn', () => {
+      let s = beginBattle(coalitionScenario);
+      s = endTurn(s).state;  // coalition turn
+      expect(() => moveUnit(s, 'fr1', { x: 1, y: 2 })).toThrow(/not your unit/);
+    });
+  });
 });
