@@ -74,6 +74,7 @@ export const austerlitz: Scenario = {
     { for: 'french', kind: 'capture-tile', args: { pos: { x: 7, y: 5 } } },
     { for: 'french', kind: 'reduce-side-strength', args: { side: 'russian', threshold: 8 } },
     { for: 'austrian', kind: 'survive-turns', args: { turns: 12 } },
+    { for: 'russian', kind: 'survive-turns', args: { turns: 12 } },
   ],
   turnLimit: 12,
   ai: { generalRule: 'defensive', triggers: [] },
