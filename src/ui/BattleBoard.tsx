@@ -181,12 +181,58 @@ export function BattleBoard(p: BattleBoardProps) {
   return (
     <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto bg-parchmentDark border border-ink/40">
+      <defs>
+        {/* Terrain patterns. Each renders the base colour plus a small motif
+            that tiles every 8–12 user-units. 'plain' has no pattern — kept as
+            a flat fill so units stand out cleanly. */}
+        <pattern id="terrain-forest" patternUnits="userSpaceOnUse" width="10" height="10">
+          <rect width="10" height="10" fill="#6b8a4a"/>
+          <circle cx="2.5" cy="3" r="1.6" fill="#3d5a2a"/>
+          <circle cx="7" cy="7" r="1.4" fill="#3d5a2a"/>
+        </pattern>
+        <pattern id="terrain-hill" patternUnits="userSpaceOnUse" width="14" height="7">
+          <rect width="14" height="7" fill="#c4a878"/>
+          <path d="M 0 4.5 Q 7 2 14 4.5" stroke="#8a6a40" strokeWidth="0.8" fill="none"/>
+          <path d="M 0 7   Q 7 4.5 14 7"  stroke="#8a6a40" strokeWidth="0.6" fill="none" opacity="0.6"/>
+        </pattern>
+        <pattern id="terrain-town" patternUnits="userSpaceOnUse" width="10" height="10">
+          <rect width="10" height="10" fill="#a08868"/>
+          <rect x="1.2" y="3.5" width="2.6" height="3.5" fill="#5a4830"/>
+          <polygon points="1.2,3.5 2.5,2.2 3.8,3.5" fill="#5a4830"/>
+          <rect x="5.5" y="2.5" width="2.4" height="4.5" fill="#5a4830"/>
+          <polygon points="5.5,2.5 6.7,1.4 7.9,2.5" fill="#5a4830"/>
+        </pattern>
+        <pattern id="terrain-river" patternUnits="userSpaceOnUse" width="14" height="7">
+          <rect width="14" height="7" fill="#5a7a9a"/>
+          <path d="M 0 3.5 Q 3.5 1.5 7 3.5 T 14 3.5" stroke="#a8c0d8" strokeWidth="0.7" fill="none"/>
+          <path d="M 0 6   Q 3.5 4 7 6     T 14 6"   stroke="#a8c0d8" strokeWidth="0.5" fill="none" opacity="0.7"/>
+        </pattern>
+        <pattern id="terrain-bridge" patternUnits="userSpaceOnUse" width="6" height="6">
+          <rect width="6" height="6" fill="#caa770"/>
+          <line x1="1.5" y1="0" x2="1.5" y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
+          <line x1="3"   y1="0" x2="3"   y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
+          <line x1="4.5" y1="0" x2="4.5" y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
+        </pattern>
+        <pattern id="terrain-marsh" patternUnits="userSpaceOnUse" width="8" height="8">
+          <rect width="8" height="8" fill="#7a8a5a"/>
+          <circle cx="2"   cy="2"   r="0.7" fill="#4a5a30"/>
+          <circle cx="6"   cy="3.5" r="0.5" fill="#4a5a30"/>
+          <circle cx="3.5" cy="6"   r="0.6" fill="#4a5a30"/>
+          <circle cx="7"   cy="7"   r="0.4" fill="#4a5a30"/>
+        </pattern>
+        <pattern id="terrain-road" patternUnits="userSpaceOnUse" width="12" height="12">
+          <rect width="12" height="12" fill="#d8c89a"/>
+          <line x1="6" y1="0" x2="6" y2="12" stroke="#9a8050" strokeWidth="0.7" strokeDasharray="2.5 2.5"/>
+        </pattern>
+      </defs>
       {/* Tiles */}
       {Array.from({ length: scenario.grid.height }, (_, y) =>
         Array.from({ length: scenario.grid.width }, (_, x) => {
           const ter = scenario.tiles.find(t => posEq(t.pos, { x, y }))?.terrain ?? 'plain';
           const isMove = moveSet.has(posKey({ x, y }));
-          const fill = isMove ? '#b8d8b8' : TERRAIN_FILL[ter];
+          const fill = isMove
+            ? '#b8d8b8'
+            : ter === 'plain' ? TERRAIN_FILL.plain : `url(#terrain-${ter})`;
           return (
             <rect
               key={`${x},${y}`}

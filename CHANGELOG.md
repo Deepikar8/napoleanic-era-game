@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.14.0 — 2026-05-03
+
+Closes the design review's last open item (#5 — terrain readability).
+
+### Added
+- **Terrain patterns**, defined as SVG `<pattern>` elements in the BattleBoard's `<defs>`. Each non-plain terrain now has a recognizable motif that tiles inside its cell:
+  - **Forest** — green field with darker green tree dots
+  - **Hill** — tan field with two contour lines (topographic-style)
+  - **Town** — brown field with two small pitched-roof buildings
+  - **River** — blue field with stacked wave lines
+  - **Bridge** — wood-coloured field with vertical plank lines
+  - **Marsh** — muddy green field with dark speckle dots
+  - **Road** — sandy field with a dashed centre line
+  - Plain stays as a flat parchment colour so units pop cleanly.
+- The "you can move here" green highlight still overrides the terrain pattern (movement clarity beats terrain readability in that moment).
+
+The kid should now scan the board and *recognize the geography*: hills look like hills, the Danube looks like a river, the bridge at Elchingen looks like wooden planks. Tooltips remain the source of truth for exact effect, but the eye gets the gist for free.
+
 ## v1.13.1 — 2026-05-03
 
 Reported by playtester: "at Haslach round 6, all the army is killed but the game did not end".
