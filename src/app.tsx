@@ -6,6 +6,7 @@ import { BattleEndScreen } from './ui/BattleEndScreen';
 import { ReplayViewer } from './ui/ReplayViewer';
 import { DispatchScreen } from './ui/DispatchScreen';
 import { HelpOverlay } from './ui/HelpOverlay';
+import { CampaignEndScreen } from './ui/CampaignEndScreen';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
@@ -25,6 +26,7 @@ export default function App() {
     case 'battle-end':     body = <BattleEndScreen />; break;
     case 'replay':         body = <ReplayViewer />; break;
     case 'dispatch':       body = <DispatchScreen />; break;
+    case 'campaign-end':   body = <CampaignEndScreen />; break;
     default:               body = <Splash />;
   }
   return (<>{body}<HelpOverlay /></>);
