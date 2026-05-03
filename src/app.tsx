@@ -4,6 +4,7 @@ import { Splash } from './ui/Splash';
 import { CampaignMenu } from './ui/CampaignMenu';
 import { BattleEndScreen } from './ui/BattleEndScreen';
 import { ReplayViewer } from './ui/ReplayViewer';
+import { DispatchScreen } from './ui/DispatchScreen';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
@@ -21,6 +22,7 @@ export default function App() {
     case 'battle':         return <BattleScreen />;
     case 'battle-end':     return <BattleEndScreen />;
     case 'replay':         return <ReplayViewer />;
+    case 'dispatch':       return <DispatchScreen />;
     default:               return <Splash />;
   }
 }

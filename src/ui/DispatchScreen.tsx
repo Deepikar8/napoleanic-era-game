@@ -1,0 +1,33 @@
+import { marked } from 'marked';
+import { useGame } from '../state/store';
+import { loadDispatch } from '../dispatches/loader';
+import { Button, Panel } from './shared';
+import { DecisionPicker } from './DecisionPicker';
+
+export function DispatchScreen() {
+  const { state, scenario, goto } = useGame();
+  if (!state || !scenario) return null;
+
+  const md = loadDispatch(scenario.briefingMd);
+  const html = marked.parse(md, { async: false }) as string;
+
+  const decision = scenario.preBattleDecision;
+  const decisionTaken = state.decisionsTaken.some(d => d.decisionId === decision?.id);
+
+  return (
+    <main className="min-h-full p-6 max-w-3xl mx-auto">
+      <Panel>
+        <article
+          className="prose prose-stone font-serif text-lg leading-relaxed max-w-none"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      </Panel>
+      {decision && !decisionTaken && <DecisionPicker decision={decision} />}
+      {(!decision || decisionTaken) && (
+        <div className="mt-4 flex justify-end">
+          <Button onClick={() => goto('battle')}>Continue to battle →</Button>
+        </div>
+      )}
+    </main>
+  );
+}
