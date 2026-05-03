@@ -1,62 +1,42 @@
-import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import { useGame } from './state/store';
+import { Splash } from './ui/Splash';
+import { CampaignMenu } from './ui/CampaignMenu';
+import { BattleEndScreen } from './ui/BattleEndScreen';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
 import { UnitSpriteDefs } from './art/unit-silhouettes';
-import { austerlitz } from './scenarios/07-austerlitz';
-import {
-  beginBattle, moveUnit, attack, changeFormation, endTurn,
-  checkVictory,
-} from './engine';
-import type { GameState, Pos } from './engine/types';
+import { checkVictory } from './engine';
 
 export default function App() {
-  const [history, setHistory] = useState<GameState[]>(() => [beginBattle(austerlitz)]);
-  const state = history[history.length - 1];
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoveredEnemyId, setHoveredEnemyId] = useState<string | null>(null);
+  const screen = useGame(s => s.screen);
 
-  const victory = useMemo(() => checkVictory(state, austerlitz.victory), [state]);
+  switch (screen) {
+    case 'splash':         return <Splash />;
+    case 'campaign-menu':  return <CampaignMenu />;
+    case 'battle':         return <BattleScreen />;
+    case 'battle-end':     return <BattleEndScreen />;
+    default:               return <Splash />;
+  }
+}
 
-  const push = (next: GameState) => setHistory(h => [...h, next]);
-  const undo = () => setHistory(h => (h.length > 1 ? h.slice(0, -1) : h));
+function BattleScreen() {
+  const {
+    state, scenario, selectedUnitId, hoveredEnemyId,
+    selectUnit, hoverEnemy, doMove, doAttack, doFormation, doEndTurn, undo,
+    saveCurrent,
+  } = useGame();
 
-  const selected = selectedId ? state.units.find(u => u.id === selectedId) ?? null : null;
+  useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
+
+  if (!state || !scenario) return <Splash />;
+
+  const selected = selectedUnitId ? state.units.find(u => u.id === selectedUnitId) ?? null : null;
   const hoveredEnemy = hoveredEnemyId ? state.units.find(u => u.id === hoveredEnemyId) ?? null : null;
-
-  const handleMove = (to: Pos) => {
-    if (!selectedId) return;
-    try {
-      const next = moveUnit(state, selectedId, to,
-        { tiles: austerlitz.tiles, grid: austerlitz.grid }).state;
-      push(next);
-    } catch (e) {
-      console.warn(e);
-    }
-  };
-
-  const handleAttack = (defenderId: string) => {
-    if (!selectedId) return;
-    try {
-      const next = attack(state, selectedId, defenderId).state;
-      push(next);
-      setSelectedId(null);
-    } catch (e) {
-      console.warn(e);
-    }
-  };
-
-  const handleEndTurn = () => {
-    push(endTurn(state).state);
-    setSelectedId(null);
-  };
-
-  const handleFormation = (to: 'line' | 'column' | 'square') => {
-    if (!selectedId) return;
-    try { push(changeFormation(state, selectedId, to).state); } catch (e) { console.warn(e); }
-  };
+  const v = checkVictory(state, scenario.victory);
 
   return (
     <div className="min-h-full p-4 grid grid-cols-[1fr_320px] gap-4">
@@ -65,41 +45,42 @@ export default function App() {
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">
           <div>
             <span className="font-bold uppercase">{state.currentSide}</span>
-            <span className="ml-3 text-sm">Turn {state.turn} / {austerlitz.turnLimit ?? '∞'}</span>
+            <span className="ml-3 text-sm">Turn {state.turn} / {scenario.turnLimit ?? '∞'}</span>
           </div>
-          <div className="text-xs opacity-80">
-            {victory.kind === 'decided'
-              ? <span className="text-gilt font-bold">Victory: {victory.victor} — {victory.reason}</span>
-              : <span>{austerlitz.title}</span>}
-          </div>
+          <div className="text-xs opacity-80">{scenario.title}</div>
         </header>
         <BattleBoard
-          scenario={austerlitz}
+          scenario={scenario}
           state={state}
-          selectedUnitId={selectedId}
+          selectedUnitId={selectedUnitId}
           hoveredEnemyId={hoveredEnemyId}
-          onSelectUnit={setSelectedId}
-          onMoveTo={handleMove}
-          onAttack={handleAttack}
-          onHoverEnemy={setHoveredEnemyId}
+          onSelectUnit={selectUnit}
+          onMoveTo={doMove}
+          onAttack={doAttack}
+          onHoverEnemy={hoverEnemy}
         />
         <div className="mt-3 flex gap-2 items-center">
-          <Button onClick={undo} kind="secondary" disabled={history.length === 1}>Undo</Button>
+          <Button onClick={undo} kind="secondary">Undo</Button>
           <div className="flex-1" />
           {selected && (
             <>
-              <Button onClick={() => handleFormation('line')}   kind="secondary">Line</Button>
-              <Button onClick={() => handleFormation('column')} kind="secondary">Column</Button>
-              <Button onClick={() => handleFormation('square')} kind="secondary">Square</Button>
+              <Button onClick={() => doFormation('line')}   kind="secondary">Line</Button>
+              <Button onClick={() => doFormation('column')} kind="secondary">Column</Button>
+              <Button onClick={() => doFormation('square')} kind="secondary">Square</Button>
             </>
           )}
-          <Button onClick={handleEndTurn}>End Turn</Button>
+          <Button onClick={doEndTurn}>End Turn</Button>
         </div>
       </div>
       <aside>
         <UnitPanel unit={selected} />
         <AttackPreview attacker={selected} defender={hoveredEnemy} />
         <BattleLog events={state.log} />
+        {v.kind === 'decided' && (
+          <div className="bg-gilt text-ink p-3 rounded mt-3 text-sm">
+            Victory: <strong>{v.victor}</strong> — {v.reason}
+          </div>
+        )}
       </aside>
     </div>
   );

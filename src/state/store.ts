@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Pos, Formation, Scenario } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
 import { localStorageBackend, newRunId } from './save';
+import { campaignScenarios } from '../scenarios';
 
 export type Screen = 'splash' | 'campaign-menu' | 'dispatch' | 'battle' | 'battle-end' | 'campaign-end' | 'replay';
 
@@ -28,6 +29,7 @@ interface Store {
   doEndTurn(): void;
   undo(): void;
   saveCurrent(): void;
+  advanceAfterBattle(): void;
 }
 
 export const useGame = create<Store>((set, get) => ({
@@ -109,5 +111,22 @@ export const useGame = create<Store>((set, get) => ({
     const { runId, state } = get();
     if (!runId || !state) return;
     localStorageBackend.save({ runId, savedAt: Date.now(), state });
+  },
+
+  advanceAfterBattle() {
+    const { state, scenario, runId } = get();
+    if (!state || !scenario || !runId) return;
+    const v = checkVictory(state, scenario.victory);
+    const idx = state.scenarioIndex;
+    const next = campaignScenarios[idx + 1];
+    if (!next) { set({ screen: 'campaign-end' }); return; }
+    const nextState = beginBattle(next);
+    nextState.scenarioIndex = idx + 1;
+    nextState.outcomes = [
+      ...state.outcomes,
+      { scenarioId: state.scenarioId, victor: v.kind === 'decided' ? v.victor : state.currentSide, turnsTaken: state.turn },
+    ];
+    set({ state: nextState, scenario: next, history: [nextState], screen: 'battle' });
+    get().saveCurrent();
   },
 }));
