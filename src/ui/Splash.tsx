@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useGame } from '../state/store';
 import { localStorageBackend, type SavedRun } from '../state/save';
 import { Button } from './shared';
-import { austerlitz } from '../scenarios/07-austerlitz';
 import { campaignScenarios, getScenarioById } from '../scenarios';
 
 export function Splash() {
@@ -24,7 +23,7 @@ export function Splash() {
         <h1 className="font-serif text-5xl mb-1">1805</h1>
         <p className="font-serif text-xl italic mb-8 opacity-80">A Napoleonic Campaign</p>
         <div className="space-y-3">
-          <div><Button onClick={() => startNewRun(austerlitz)}>New Campaign</Button></div>
+          <div><Button onClick={() => startNewRun(campaignScenarios[0])}>New Campaign</Button></div>
           {runs.length > 0 && (
             <div><Button onClick={onContinue} kind="secondary">Continue ({runs[0].state.scenarioId}, turn {runs[0].state.turn})</Button></div>
           )}
@@ -36,7 +35,7 @@ export function Splash() {
           </label>
         </div>
         <p className="mt-10 text-xs opacity-50">
-          v0.4 · Phase 4
+          v1.0.0
           <label className="ml-2 cursor-pointer select-none">
             <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} /> Mute
           </label>
