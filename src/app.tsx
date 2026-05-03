@@ -74,7 +74,7 @@ function BattleScreen() {
   const v = checkVictory(state, scenario.victory);
 
   return (
-    <div className="min-h-full p-4 grid grid-cols-[1fr_320px] gap-4">
+    <div className="min-h-full p-4 grid grid-cols-[1fr_22rem] gap-4">
       <UnitSpriteDefs />
       <div className="flex flex-col">
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">

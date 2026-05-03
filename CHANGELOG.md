@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.4.1 — 2026-05-03
+
+### Fixed
+- **Text too small on desktop.** Reported by playtester (playing on a desktop monitor instead of iPad). Root font size now scales with viewport: 16px on phone/iPad (correct touch sizing preserved), 18px on screens ≥ 1024px, 20px on screens ≥ 1536px. All `rem`-based Tailwind text/spacing scales proportionally.
+- BattleLog and Replay log entries bumped from `text-xs` to `text-sm` so they're comfortable on any screen.
+- Sidebar width is now `22rem` (was a hardcoded `320px`), so on a 4K display the unit/attack/log column grows alongside the rest of the layout.
+
 ## v1.4.0 — 2026-05-03
 
 The "harder AI" pass.

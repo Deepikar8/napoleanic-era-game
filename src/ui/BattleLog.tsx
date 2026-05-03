@@ -18,7 +18,7 @@ const formatEvent = (e: BattleEvent): string => {
 export function BattleLog({ events }: { events: BattleEvent[] }) {
   return (
     <Panel title="Battle log">
-      <div className="text-xs leading-relaxed max-h-48 overflow-y-auto bg-parchment p-2 rounded">
+      <div className="text-sm leading-relaxed max-h-48 overflow-y-auto bg-parchment p-2 rounded">
         {[...events].reverse().slice(0, 40).map((e, i) => (
           <div key={`event-${events.length - 1 - i}`} className="border-b border-ink/10 py-0.5 last:border-0">{formatEvent(e)}</div>
         ))}

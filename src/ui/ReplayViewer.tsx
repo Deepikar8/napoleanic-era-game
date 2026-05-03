@@ -77,7 +77,7 @@ export function ReplayViewer() {
       </Panel>
 
       <Panel title="Full log">
-        <div className="text-xs font-mono leading-relaxed max-h-72 overflow-y-auto bg-parchment p-2 rounded">
+        <div className="text-sm font-mono leading-relaxed max-h-72 overflow-y-auto bg-parchment p-2 rounded">
           {events.map((e, k) => (
             <div
               key={k}
