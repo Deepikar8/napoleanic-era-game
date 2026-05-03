@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.5.0 — 2026-05-03
+
+The "feedback / payoff" pass.
+
+### Added
+- **Victory progress pills** under the battle header. Each French objective renders as a small chip showing live progress: `Reduce russian to <8 (now 16)`, `Survive to turn 12 (turn 4/12)`, `Capture (5,4)`, etc. Met objectives flip to gold with a ✓. New engine helper `summarizeVictory(state, conds)` exports human-readable progress for any condition.
+- **Post-battle dispatches.** All 7 `*-postbattle.md` files now have real prose (Wertingen → Austerlitz). Battle End screen renders the markdown via `marked` between the banner and the summary, closing the narrative loop after each fight.
+- **Victory banner flourish.** When the French win, the banner zooms in with a brief shimmer (gold colour, 900ms cubic ease). CSS keyframes only — no JS.
+- **Replay auto-play.** Replay viewer gains a `▶ Auto` / `⏸ Pause` button that advances events at 700ms each. Auto-pauses on reaching the end. Manual nav buttons pause autoplay so the kid can scrub freely.
+
 ## v1.4.1 — 2026-05-03
 
 ### Fixed

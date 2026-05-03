@@ -16,7 +16,7 @@ import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
 import { UnitSpriteDefs } from './art/unit-silhouettes';
-import { checkVictory } from './engine';
+import { checkVictory, summarizeVictory } from './engine';
 
 export default function App() {
   const screen = useGame(s => s.screen);
@@ -72,6 +72,7 @@ function BattleScreen() {
   const selected = selectedUnitId ? state.units.find(u => u.id === selectedUnitId) ?? null : null;
   const hoveredEnemy = hoveredEnemyId ? state.units.find(u => u.id === hoveredEnemyId) ?? null : null;
   const v = checkVictory(state, scenario.victory);
+  const objectives = summarizeVictory(state, scenario.victory).filter(o => o.for === 'french');
 
   return (
     <div className="min-h-full p-4 grid grid-cols-[1fr_22rem] gap-4">
@@ -84,6 +85,18 @@ function BattleScreen() {
           </div>
           <div className="text-xs opacity-80">{scenario.title}</div>
         </header>
+        {objectives.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-2">
+            {objectives.map((o, i) => (
+              <span
+                key={i}
+                className={`text-xs px-2 py-1 rounded border ${o.met ? 'bg-gilt text-ink border-gilt' : 'bg-parchmentDark text-ink border-ink/30'}`}
+              >
+                {o.label}
+              </span>
+            ))}
+          </div>
+        )}
         <TutorialHint />
         <BattleBoard
           scenario={scenario}

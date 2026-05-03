@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useGame } from '../state/store';
 import { Button, Panel } from './shared';
 import { BattleBoard } from './BattleBoard';
@@ -23,6 +23,15 @@ const describe = (e: BattleEvent): string => {
 export function ReplayViewer() {
   const { state, scenario, goto } = useGame();
   const [i, setI] = useState(0);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    const events = state?.log ?? [];
+    if (i >= events.length - 1) { setPlaying(false); return; }
+    const t = setTimeout(() => setI(prev => prev + 1), 700);
+    return () => clearTimeout(t);
+  }, [playing, i, state?.log]);
   if (!state || !scenario) {
     return (
       <main className="min-h-full p-6 max-w-2xl mx-auto">
@@ -52,12 +61,20 @@ export function ReplayViewer() {
         <div className="font-mono text-sm bg-parchment p-3 rounded min-h-[3em]">
           {events[safeI] ? describe(events[safeI]) : '— no events —'}
         </div>
-        <div className="flex gap-2 mt-3">
-          <Button kind="secondary" onClick={() => setI(Math.max(0, safeI - 1))}>◀ Back</Button>
-          <Button onClick={() => setI(Math.min(events.length - 1, safeI + 1))}>Forward ▶</Button>
+        <div className="flex gap-2 mt-3 flex-wrap">
+          <Button kind="secondary" onClick={() => { setPlaying(false); setI(Math.max(0, safeI - 1)); }}>◀ Back</Button>
+          <Button onClick={() => { setPlaying(false); setI(Math.min(events.length - 1, safeI + 1)); }}>Forward ▶</Button>
+          <Button
+            onClick={() => {
+              if (safeI >= events.length - 1) { setI(0); setPlaying(true); }
+              else setPlaying(p => !p);
+            }}
+          >
+            {playing ? '⏸ Pause' : '▶ Auto'}
+          </Button>
           <div className="flex-1" />
-          <Button kind="secondary" onClick={() => setI(0)}>⏮ Start</Button>
-          <Button kind="secondary" onClick={() => setI(events.length - 1)}>End ⏭</Button>
+          <Button kind="secondary" onClick={() => { setPlaying(false); setI(0); }}>⏮ Start</Button>
+          <Button kind="secondary" onClick={() => { setPlaying(false); setI(events.length - 1); }}>End ⏭</Button>
         </div>
       </Panel>
 

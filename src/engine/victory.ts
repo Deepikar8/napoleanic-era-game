@@ -45,3 +45,58 @@ export function checkVictory(state: GameState, conds: VictoryCondition[]): Victo
   }
   return { kind: 'in-progress' };
 }
+
+export interface ConditionSummary {
+  for: Side;
+  label: string;
+  met: boolean;
+}
+
+/** Human-readable per-condition progress for use in the battle UI. */
+export function summarizeVictory(
+  state: GameState,
+  conds: VictoryCondition[],
+): ConditionSummary[] {
+  return conds.map(c => {
+    const { met } = condMet(state, c);
+    return { for: c.for, label: labelFor(state, c, met), met };
+  });
+}
+
+function labelFor(state: GameState, c: VictoryCondition, met: boolean): string {
+  switch (c.kind) {
+    case 'eliminate-unit': {
+      const id = c.args.unitId as string;
+      const unit = state.units.find(u => u.id === id);
+      const name = unit?.name ?? id;
+      return met ? `Eliminate ${name} ✓` : `Eliminate ${name}`;
+    }
+    case 'reduce-side-strength': {
+      const side = c.args.side as Side;
+      const threshold = c.args.threshold as number;
+      const total = state.units.filter(u => u.side === side).reduce((s, u) => s + u.strength, 0);
+      return met
+        ? `Reduce ${side} to <${threshold} ✓`
+        : `Reduce ${side} to <${threshold} (now ${total})`;
+    }
+    case 'survive-turns': {
+      const turns = c.args.turns as number;
+      return met
+        ? `Survive to turn ${turns} ✓`
+        : `Survive to turn ${turns} (turn ${state.turn}/${turns})`;
+    }
+    case 'capture-tile': {
+      const pos = c.args.pos as { x: number; y: number };
+      return met
+        ? `Capture (${pos.x},${pos.y}) ✓`
+        : `Capture (${pos.x},${pos.y})`;
+    }
+    case 'hold-tile-for-turns': {
+      const pos = c.args.pos as { x: number; y: number };
+      const turns = c.args.turns as number;
+      return met
+        ? `Hold (${pos.x},${pos.y}) ${turns} turns ✓`
+        : `Hold (${pos.x},${pos.y}) until turn ${turns} (turn ${state.turn}/${turns})`;
+    }
+  }
+}
