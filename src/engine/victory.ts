@@ -20,7 +20,10 @@ const condMet = (state: GameState, c: VictoryCondition): { met: boolean; reason:
     }
     case 'survive-turns': {
       const turns = c.args.turns as number;
-      return { met: state.turn >= turns, reason: `survived to turn ${turns}` };
+      // Fires only after BOTH sides have completed turn N (i.e., we're at the
+      // start of turn N+1). Otherwise the surviving side could win by ending
+      // their final turn before the opposing side gets its last action.
+      return { met: state.turn > turns, reason: `survived to turn ${turns}` };
     }
     case 'capture-tile': {
       const pos = c.args.pos as Pos;
@@ -33,7 +36,11 @@ const condMet = (state: GameState, c: VictoryCondition): { met: boolean; reason:
       const pos = c.args.pos as Pos;
       const turns = c.args.turns as number;
       const standing = state.units.some(u => u.side === c.for && posEq(u.position, pos));
-      return { met: standing && state.turn >= turns, reason: `held tile for ${turns} turns` };
+      // Fires only after the opposing side has had its turn N action — i.e.,
+      // we're at the start of turn N+1 and the side still has a unit on the
+      // tile after the counter-attack. Otherwise the holder could just step
+      // on at the end of their turn N and win before being challenged.
+      return { met: standing && state.turn > turns, reason: `held tile for ${turns} turns` };
     }
   }
 };

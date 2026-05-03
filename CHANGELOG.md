@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.9.1 — 2026-05-03
+
+External code review pass.
+
+### Fixed
+- **Survival/hold victories could fire before the opposing side took its final turn.** Engine evaluated `survive-turns` and `hold-tile-for-turns` at `state.turn >= turns`. After the player ended their turn N, the check fired with `state.turn === N` and the surviving side won — *before* the opposing AI got its turn-N action. This let French press End Turn on turn 8 and win Haslach (Dupont alive) or Krems (Mortier alive) without facing the aggressive AI's last attempt; same pattern at Austerlitz Pratzen Heights. Now uses `state.turn > turns`, so the check fires only after both sides have completed turn N (i.e., we're at the start of turn N+1). Two new tests in `turn.test.ts` and the existing `victory.test.ts` survive-turns case updated to reflect the corrected semantic.
+- **Austerlitz Coalition AI was defensive but the scenario tells the player they'll counter-attack.** `defensive` makes the AI sit unless an enemy is adjacent; the briefing/hint promised the Coalition would push back on the Pratzen Heights. Flipped to `aggressive` so the Coalition actually advances. Tactical hint updated: "have someone standing there at turn 9 (after Coalition's turn 8)" — explicit about the timing now that survival/hold semantics have changed.
+
 ## v1.9.0 — 2026-05-03
 
 Design review pass — making each scenario teach a different Napoleonic lesson.

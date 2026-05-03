@@ -38,13 +38,16 @@ describe('victory', () => {
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
   });
 
-  it('survive-turns triggers at limit', () => {
+  it('survive-turns fires only after the threshold turn is completed (not reached)', () => {
     const conds: VictoryCondition[] = [{
       for: 'french', kind: 'survive-turns', args: { turns: 5 },
     }];
-    expect(checkVictory(baseState({ turn: 4 }), conds)).toEqual({ kind: 'in-progress' });
-    expect(checkVictory(baseState({ turn: 5 }), conds))
+    // Mid-turn-5 — both sides may still have actions. NOT a win yet.
+    expect(checkVictory(baseState({ turn: 5 }), conds)).toEqual({ kind: 'in-progress' });
+    // Turn 6 starts only after both sides finished turn 5. NOW a win.
+    expect(checkVictory(baseState({ turn: 6 }), conds))
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
+    expect(checkVictory(baseState({ turn: 4 }), conds)).toEqual({ kind: 'in-progress' });
   });
 
   it('capture-tile when a friendly unit stands on it', () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Unit, Scenario } from '../../src/engine/types';
 import { moveUnit, attack, endTurn, beginBattle, changeFormation } from '../../src/engine/turn';
+import { checkVictory } from '../../src/engine/victory';
 
 const u = (over: Partial<Unit> & Pick<Unit, 'id' | 'side'>): Unit => ({
   type: 'line-infantry', position: { x: 0, y: 0 }, facing: 'N',
@@ -165,6 +166,51 @@ describe('turn manager', () => {
       let s = beginBattle(coalitionScenario);
       s = endTurn(s).state;  // coalition turn
       expect(() => moveUnit(s, 'fr1', { x: 1, y: 2 })).toThrow(/not your unit/);
+    });
+  });
+
+  describe('victory timing — survival/hold conditions need both sides to play the threshold turn', () => {
+    const survivalScn: Scenario = {
+      id: 'survival', title: 'Survival', briefingMd: 't',
+      grid: { width: 4, height: 4 }, tiles: [],
+      units: [
+        u({ id: 'fr1', side: 'french',  position: { x: 0, y: 0 } }),
+        u({ id: 'au1', side: 'austrian', position: { x: 3, y: 3 } }),
+      ],
+      victory: [
+        { for: 'french', kind: 'survive-turns', args: { turns: 2 } },
+        { for: 'austrian', kind: 'eliminate-unit', args: { unitId: 'fr1' } },
+      ],
+      ai: { generalRule: 'aggressive', triggers: [] },
+    };
+
+    it('French ending their turn at the threshold does NOT win — coalition must still act', () => {
+      // Turn 1: French ends, Coalition plays, French turn 2 starts.
+      let s = beginBattle(survivalScn);
+      s = endTurn(s).state;   // -> austrian turn 1
+      s = endTurn(s).state;   // -> french turn 2
+      expect(s.turn).toBe(2);
+      // French ends turn 2 — currentSide flips to austrian, turn stays 2.
+      // Survive-turns(turns:2) must NOT fire here; austrian still has its turn 2.
+      const r = endTurn(s);
+      const v = checkVictory(r.state, survivalScn.victory);
+      expect(r.state.currentSide).toBe('austrian');
+      expect(r.state.turn).toBe(2);
+      expect(v.kind).toBe('in-progress');
+    });
+
+    it('Coalition ending the threshold turn flips to French and FIRES the survival win', () => {
+      let s = beginBattle(survivalScn);
+      s = endTurn(s).state;   // austrian turn 1
+      s = endTurn(s).state;   // french turn 2
+      s = endTurn(s).state;   // austrian turn 2
+      // Now coalition ends turn 2 — turn becomes 3, French wins survival.
+      const r = endTurn(s);
+      const v = checkVictory(r.state, survivalScn.victory);
+      expect(r.state.currentSide).toBe('french');
+      expect(r.state.turn).toBe(3);
+      expect(v.kind).toBe('decided');
+      if (v.kind === 'decided') expect(v.victor).toBe('french');
     });
   });
 });

@@ -81,8 +81,11 @@ export const austerlitz: Scenario = {
     { for: 'russian', kind: 'survive-turns', args: { turns: 12 } },
   ],
   turnLimit: 12,
-  ai: { generalRule: 'defensive', triggers: [] },
+  // Aggressive: the Coalition will advance toward your line and counter-attack
+  // the Pratzen Heights when you take them. Defensive would have them sit still,
+  // contradicting the scenario's central premise.
+  ai: { generalRule: 'aggressive', triggers: [] },
   postBattleDispatch: '07-austerlitz-postbattle',
   tacticalHint:
-    'Bait and counterstroke. The Pratzen Heights (6,5) are everything — take them by turn 8 AND have someone standing there at turn 8 to win. The Coalition will counter-attack to retake the heights, so don\'t just race a cavalryman in; bring infantry to dig in. Soult and Davout do the heavy lifting; the Imperial Guard is your reserve. Alternative: grind Russian strength below 6 if you can\'t hold the heights.',
+    'Bait and counterstroke. The Pratzen Heights (6,5) are everything — take them, and have someone standing there at turn 9 (after Coalition\'s turn 8) to win. The Coalition is aggressive: they\'ll advance on your line and try to retake the heights, so don\'t just race a cavalryman in; bring infantry to dig in. Soult and Davout do the heavy lifting; the Imperial Guard is your reserve. Alternative: grind Russian strength below 6 if you can\'t hold.',
 };
