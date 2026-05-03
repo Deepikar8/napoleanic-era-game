@@ -35,7 +35,7 @@ export function Splash() {
           </label>
         </div>
         <p className="mt-10 text-xs opacity-50">
-          v1.0.0
+          v1.0.1
           <label className="ml-2 cursor-pointer select-none">
             <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} /> Mute
           </label>
