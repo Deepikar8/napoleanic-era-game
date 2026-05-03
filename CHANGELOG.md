@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.7.0 — 2026-05-03
+
+### Added
+- **AI difficulty selector on the splash.** Three levels, default Normal:
+  - **Easy** — attacks any adjacent enemy, no preview math, never forms square. Throws weak units away.
+  - **Normal** (the v1.4.0 behavior) — uses preview math, skips losing attacks (gap < −1), forms square vs adjacent cavalry.
+  - **Hard** — Normal plus: only attacks if predicted to win (gap ≥ 0); on the move, targets the weakest reachable enemy instead of the nearest (flanking).
+- **Help overlay** now has a "Solo mode &amp; AI difficulty" section explaining the three levels.
+- 2 new AI tests: easy attacks suicide trades; hard refuses gap=−1 trades that normal still takes.
+
+The radio buttons are disabled when Solo mode is off (since the AI never runs in hot-seat). `runAiTurn(state, scenario, difficulty)` defaults to `'normal'` so existing call sites stay compatible.
+
 ## v1.6.2 — 2026-05-03
 
 Reported by playtester: "I saw 3 unspent but none of the pawns when clicked showed the green paths or red to attack."

@@ -105,6 +105,48 @@ describe('AI', () => {
     expect(r.events.some(e => e.kind === 'attack-resolved')).toBe(false);
   });
 
+  it('easy difficulty attacks any adjacent enemy without preview math', () => {
+    // Same setup as the suicidal-attack test, but on easy: AI should still
+    // attack the much-stronger grenadier even though the predicted result is
+    // bad.
+    const scn: Scenario = {
+      id: 'easy-vs-suicide', title: 'Easy', briefingMd: 't',
+      grid: { width: 4, height: 4 }, tiles: [],
+      units: [
+        u({ id: 'au1', side: 'austrian', position: { x: 1, y: 1 }, strength: 1, morale: 1 }),
+        u({ id: 'fr1', side: 'french',   position: { x: 2, y: 1 }, strength: 4, morale: 3, type: 'grenadier' }),
+      ],
+      victory: [{ for: 'french', kind: 'eliminate-unit', args: { unitId: 'au1' } }],
+      ai: { generalRule: 'aggressive', triggers: [] },
+    };
+    let state = beginBattle(scn);
+    state = { ...state, currentSide: 'austrian' };
+    const r = runAiTurn(state, scn, 'easy');
+    expect(r.events.some(e => e.kind === 'attack-resolved')).toBe(true);
+  });
+
+  it('hard difficulty refuses attacks at gap=-1 that normal would still take', () => {
+    // Attacker: strength 4 + morale 1 = 5, +1 line vs infantry = 6.
+    // Defender: strength 4 + morale 2 = 6, +1 line vs infantry = 7.
+    // Gap = -1 → normal attacks (>= -1 threshold), hard refuses (>= 0 threshold).
+    const scn: Scenario = {
+      id: 'hard-marginal', title: 'Hard', briefingMd: 't',
+      grid: { width: 4, height: 4 }, tiles: [],
+      units: [
+        u({ id: 'au1', side: 'austrian', position: { x: 1, y: 1 }, strength: 4, morale: 1 }),
+        u({ id: 'fr1', side: 'french',   position: { x: 2, y: 1 }, strength: 4, morale: 2, moraleRevealed: true }),
+      ],
+      victory: [{ for: 'french', kind: 'survive-turns', args: { turns: 3 } }],
+      ai: { generalRule: 'defensive', triggers: [] },
+    };
+    let state = beginBattle(scn);
+    state = { ...state, currentSide: 'austrian' };
+    const rNormal = runAiTurn(state, scn, 'normal');
+    const rHard = runAiTurn(state, scn, 'hard');
+    expect(rNormal.events.some(e => e.kind === 'attack-resolved')).toBe(true);
+    expect(rHard.events.some(e => e.kind === 'attack-resolved')).toBe(false);
+  });
+
   it('picks the best-gap adjacent target instead of the first one', () => {
     // Two adjacent enemies: a strong grenadier (gap unfavorable) and a weak conscript
     // (gap favorable). AI should attack the conscript.

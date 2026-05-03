@@ -5,7 +5,10 @@ import { Button } from './shared';
 import { campaignScenarios, getScenarioById } from '../scenarios';
 
 export function Splash() {
-  const { startNewRun, loadRun, goto, solo, setSolo, muted, setMuted } = useGame();
+  const {
+    startNewRun, loadRun, goto, solo, setSolo, muted, setMuted,
+    aiDifficulty, setAiDifficulty,
+  } = useGame();
   const [runs, setRuns] = useState<SavedRun[]>([]);
 
   useEffect(() => { setRuns(localStorageBackend.list()); }, []);
@@ -38,12 +41,29 @@ export function Splash() {
             <input type="checkbox" checked={solo} onChange={e => setSolo(e.target.checked)} />
             <span>Play solo (AI runs the Coalition)</span>
           </label>
+          <fieldset className="flex items-center justify-center gap-3 text-base flex-wrap" disabled={!solo}>
+            <legend className="contents">
+              <span className={solo ? '' : 'opacity-50'}>AI difficulty:</span>
+            </legend>
+            {(['easy', 'normal', 'hard'] as const).map(d => (
+              <label key={d} className={`cursor-pointer select-none ${solo ? '' : 'opacity-50'}`}>
+                <input
+                  type="radio"
+                  name="difficulty"
+                  checked={aiDifficulty === d}
+                  onChange={() => setAiDifficulty(d)}
+                  disabled={!solo}
+                />
+                {' '}{d.charAt(0).toUpperCase() + d.slice(1)}
+              </label>
+            ))}
+          </fieldset>
           <label className="flex items-center justify-center gap-2 text-base cursor-pointer select-none">
             <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} />
             <span>Mute (no drum or fife sounds)</span>
           </label>
         </div>
-        <p className="mt-10 text-xs opacity-50">v1.6.2</p>
+        <p className="mt-10 text-xs opacity-50">v1.7.0</p>
       </div>
     </main>
   );

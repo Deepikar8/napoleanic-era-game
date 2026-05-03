@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, Pos, Formation, Scenario } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
-import { runAiTurn } from '../engine/ai';
+import { runAiTurn, type AiDifficulty } from '../engine/ai';
 import { replayUpTo, eventUnitIds } from '../engine/replay';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
@@ -36,6 +36,7 @@ interface Store {
   solo: boolean;
   muted: boolean;
   showDetails: boolean;
+  aiDifficulty: AiDifficulty;
   errorMessage: string | null;
   isAnimating: boolean;
   animatingHighlightIds: string[];
@@ -56,6 +57,7 @@ interface Store {
   toggleHelp(): void;
   setSolo(b: boolean): void;
   setMuted(b: boolean): void;
+  setAiDifficulty(d: AiDifficulty): void;
   toggleDetails(): void;
   flashError(msg: string): void;
   clearError(): void;
@@ -68,6 +70,7 @@ export const useGame = create<Store>((set, get) => ({
   solo: false,
   muted: false,
   showDetails: false,
+  aiDifficulty: 'normal',
   errorMessage: null,
   isAnimating: false,
   animatingHighlightIds: [],
@@ -150,7 +153,7 @@ export const useGame = create<Store>((set, get) => ({
 
       const aiScenario = after.scenario;
       const stateBeforeAi = after.state;
-      const ai = runAiTurn(stateBeforeAi, aiScenario);
+      const ai = runAiTurn(stateBeforeAi, aiScenario, after.aiDifficulty);
       const v2 = checkVictory(ai.state, aiScenario.victory);
 
       const startIdx = stateBeforeAi.log.length;       // first new event index
@@ -221,6 +224,7 @@ export const useGame = create<Store>((set, get) => ({
   toggleHelp() { set(s => ({ helpOpen: !s.helpOpen })); },
   setSolo(b) { set({ solo: b }); },
   setMuted(b) { soundSetMuted(b); set({ muted: b }); },
+  setAiDifficulty(d) { set({ aiDifficulty: d }); },
   toggleDetails() { set(s => ({ showDetails: !s.showDetails })); },
   flashError(msg) {
     set({ errorMessage: msg });

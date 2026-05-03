@@ -4,6 +4,8 @@ import { legalMoves } from './movement';
 import { moveUnit, attack, changeFormation, endTurn } from './turn';
 import { previewAttack } from './preview';
 
+export type AiDifficulty = 'easy' | 'normal' | 'hard';
+
 const COALITION: Side[] = ['austrian', 'russian'];
 const sameTeam = (a: Side, b: Side) =>
   (a === 'french' && b === 'french') ||
@@ -21,6 +23,14 @@ const nearestEnemy = (unit: Unit, units: Unit[]): Unit | null => {
   );
 };
 
+const weakestEnemy = (unit: Unit, units: Unit[]): Unit | null => {
+  const enemies = units.filter(u => !sameTeam(u.side, unit.side));
+  if (enemies.length === 0) return null;
+  return enemies.reduce((best, e) =>
+    e.strength < best.strength ? e : best
+  );
+};
+
 const stepToward = (_from: Pos, to: Pos, legal: Pos[]): Pos | null => {
   if (legal.length === 0) return null;
   return legal.reduce((best, p) =>
@@ -30,6 +40,7 @@ const stepToward = (_from: Pos, to: Pos, legal: Pos[]): Pos | null => {
 
 export function runAiTurn(
   state: GameState, scenario: Scenario,
+  difficulty: AiDifficulty = 'normal',
 ): { state: GameState; events: BattleEvent[] } {
   let s = state;
   const events: BattleEvent[] = [];
@@ -70,9 +81,9 @@ export function runAiTurn(
     const adjEnemies = s.units.filter(o =>
       !sameTeam(o.side, cur.side) && chebyshev(o.position, cur.position) === 1);
 
-    // 1. Defensive formation switch — infantry threatened by adjacent cavalry forms square.
-    //    Spends the action; the +2 vs cavalry usually outvalues a single attack.
-    if (isInfantry(cur.type) && cur.formation !== 'square' &&
+    // 1. Defensive formation switch (normal+) — infantry threatened by adjacent cavalry forms square.
+    if (difficulty !== 'easy' &&
+        isInfantry(cur.type) && cur.formation !== 'square' &&
         adjEnemies.some(e => isCavalry(e.type)) && !cur.hasActed) {
       try {
         const r = changeFormation(s, cur.id, 'square');
@@ -81,38 +92,48 @@ export function runAiTurn(
       } catch { /* fall through */ }
     }
 
-    // 2. Pick the best adjacent target via preview math; skip suicidal attacks.
+    // 2. Attack adjacent enemy
     if (adjEnemies.length > 0 && !cur.hasActed) {
-      let bestTarget: Unit | null = null;
-      let bestGap = -Infinity;
-      for (const e of adjEnemies) {
-        const p = previewAttack(cur, e, s.units, scenario.tiles);
-        const gap = p.attackerScore - p.defenderScore;
-        // Tie-break: prefer the lower-strength enemy (more chance of elimination).
-        if (gap > bestGap || (gap === bestGap && bestTarget && e.strength < bestTarget.strength)) {
-          bestGap = gap;
-          bestTarget = e;
-        }
-      }
-      // gap >= -1 covers exchange, defender retreats, defender broken, attacker repulsed (1 loss).
-      // Avoid gap <= -2 (attacker breaks, costs 2 strength + retreat).
-      if (bestTarget && bestGap >= -1) {
+      if (difficulty === 'easy') {
+        // Easy: attack the first adjacent enemy. No preview math, no skip-if-bad.
         try {
-          const r = attack(s, cur.id, bestTarget.id);
+          const r = attack(s, cur.id, adjEnemies[0].id);
           s = r.state; events.push(...r.events);
           continue;
         } catch { /* skip */ }
+      } else {
+        // Normal/Hard: use preview to pick best target; skip predicted losses.
+        let bestTarget: Unit | null = null;
+        let bestGap = -Infinity;
+        for (const e of adjEnemies) {
+          const p = previewAttack(cur, e, s.units, scenario.tiles);
+          const gap = p.attackerScore - p.defenderScore;
+          if (gap > bestGap || (gap === bestGap && bestTarget && e.strength < bestTarget.strength)) {
+            bestGap = gap;
+            bestTarget = e;
+          }
+        }
+        // Hard plays only winning attacks (gap >= 0). Normal accepts trades / repulsed (gap >= -1).
+        const skipThreshold = difficulty === 'hard' ? 0 : -1;
+        if (bestTarget && bestGap >= skipThreshold) {
+          try {
+            const r = attack(s, cur.id, bestTarget.id);
+            s = r.state; events.push(...r.events);
+            continue;
+          } catch { /* skip */ }
+        }
+        if (scenario.ai.generalRule === 'defensive') continue;
       }
-      // Adjacent enemies but none worth fighting — defensive units hold; aggressive may still try
-      // to reposition next turn. Either way, don't attack.
-      if (scenario.ai.generalRule === 'defensive') continue;
     }
 
     // 3. Movement (aggressive only — defensive sits)
     if (scenario.ai.generalRule === 'aggressive' && !cur.hasMoved) {
-      const enemy = nearestEnemy(cur, s.units);
-      if (!enemy) break;
       const moves = legalMoves(cur, s.units, scenario);
+      // Hard: target the weakest reachable enemy (flanking). Normal/Easy: nearest enemy.
+      const enemy = difficulty === 'hard'
+        ? weakestEnemy(cur, s.units)
+        : nearestEnemy(cur, s.units);
+      if (!enemy) break;
       const target = stepToward(cur.position, enemy.position, moves);
       if (target) {
         try {

@@ -53,6 +53,14 @@ export function HelpOverlay() {
         <h3 className="font-bold mt-3">Morale (hidden)</h3>
         <p className="text-sm">Each unit has a hidden morale of 1 (Conscript), 2 (Veteran), or 3 (Elite). The defender's morale is revealed the first time they're attacked.</p>
 
+        <h3 className="font-bold mt-3">Solo mode &amp; AI difficulty</h3>
+        <p className="text-sm">When <strong>Play solo</strong> is on (set on the splash), the computer plays the Coalition during their turns. Three difficulty levels:</p>
+        <ul className="list-disc list-inside text-sm mt-1">
+          <li><strong>Easy</strong> — AI attacks any enemy it touches, never forms square. Will throw weak units away.</li>
+          <li><strong>Normal</strong> — AI uses combat math, skips losing fights, and forms square against cavalry.</li>
+          <li><strong>Hard</strong> — Normal plus: only attacks if predicted to <em>win</em>, and on the move targets the weakest enemy it can reach (flanking).</li>
+        </ul>
+
         <h3 className="font-bold mt-3">Keyboard shortcuts</h3>
         <ul className="list-disc list-inside text-sm">
           <li><kbd className="px-1 border border-ink/40 rounded text-xs">Space</kbd> — end turn (press once to arm, again to confirm)</li>
