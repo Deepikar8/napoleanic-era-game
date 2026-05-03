@@ -1,4 +1,5 @@
-import type { GameState, Pos, Scenario, Side, Unit } from '../engine/types';
+import { useState } from 'react';
+import type { GameState, Pos, Scenario, Side, TerrainKind, Unit } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
@@ -15,6 +16,17 @@ const SIDE_FILL: Record<Unit['side'], string> = {
 };
 const SIDE_TEXT: Record<Unit['side'], string> = {
   french: '#ffffff', austrian: '#2a2018', russian: '#ffffff',
+};
+
+const TERRAIN_INFO: Record<TerrainKind, { name: string; effect: string }> = {
+  plain:  { name: 'Plain',  effect: 'No bonus' },
+  forest: { name: 'Forest', effect: '+1 defence · doubles move cost' },
+  hill:   { name: 'Hill',   effect: '+1 defence' },
+  town:   { name: 'Town',   effect: '+1 defence' },
+  river:  { name: 'River',  effect: 'Impassable except at bridges' },
+  bridge: { name: 'Bridge', effect: 'Crossable; no defence bonus' },
+  marsh:  { name: 'Marsh',  effect: 'Triple move cost' },
+  road:   { name: 'Road',   effect: 'Faster movement' },
 };
 
 function facingTriangle(f: 'N' | 'E' | 'S' | 'W', size: number): string {
@@ -44,6 +56,8 @@ export function BattleBoard(p: BattleBoardProps) {
   const cellSize = 48;
   const w = scenario.grid.width * cellSize;
   const h = scenario.grid.height * cellSize;
+
+  const [tooltipPos, setTooltipPos] = useState<Pos | null>(null);
 
   const selected = selectedUnitId
     ? state.units.find(u => u.id === selectedUnitId) ?? null
@@ -82,9 +96,12 @@ export function BattleBoard(p: BattleBoardProps) {
               fill={fill}
               stroke="#8a7a5a" strokeWidth={0.5}
               onClick={() => {
-                if (selected && isMove) p.onMoveTo({ x, y });
-                else p.onSelectUnit(null);
+                if (selected && isMove) { p.onMoveTo({ x, y }); setTooltipPos(null); }
+                else if (selected) { p.onSelectUnit(null); setTooltipPos(null); }
+                else setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : { x, y });
               }}
+              onMouseEnter={() => { if (!selected) setTooltipPos({ x, y }); }}
+              onMouseLeave={() => { if (!selected) setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : prev); }}
               style={{ cursor: isMove ? 'pointer' : 'default' }}
             />
           );
@@ -149,6 +166,37 @@ export function BattleBoard(p: BattleBoardProps) {
           </g>
         );
       })}
+
+      {/* Terrain tooltip */}
+      {tooltipPos && (() => {
+        const ter = scenario.tiles.find(t => posEq(t.pos, tooltipPos))?.terrain ?? 'plain';
+        const info = TERRAIN_INFO[ter];
+        const occupant = state.units.find(u => posEq(u.position, tooltipPos));
+        const tipW = 160; const tipH = occupant ? 56 : 40;
+        // place tooltip above the cell when possible, else below
+        const placeAbove = tooltipPos.y > 0;
+        const tx = Math.min(Math.max(tooltipPos.x * cellSize + cellSize / 2 - tipW / 2, 2), w - tipW - 2);
+        const ty = placeAbove
+          ? tooltipPos.y * cellSize - tipH - 4
+          : tooltipPos.y * cellSize + cellSize + 4;
+        return (
+          <g pointerEvents="none">
+            <rect x={tx} y={ty} width={tipW} height={tipH} rx={4}
+                  fill="#2a2018" stroke="#d4a017" strokeWidth={1} opacity={0.95} />
+            <text x={tx + 8} y={ty + 14} fontSize="11" fontWeight="700" fill="#f5f0e6">
+              {info.name}
+            </text>
+            <text x={tx + 8} y={ty + 28} fontSize="9" fill="#f5f0e6" opacity={0.85}>
+              {info.effect}
+            </text>
+            {occupant && (
+              <text x={tx + 8} y={ty + 46} fontSize="9" fill="#d4a017">
+                {occupant.name ?? occupant.id} · {occupant.side}
+              </text>
+            )}
+          </g>
+        );
+      })()}
     </svg>
     </div>
   );
