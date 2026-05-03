@@ -45,6 +45,7 @@ export interface BattleBoardProps {
   selectedUnitId: string | null;
   hoveredEnemyId: string | null;
   showDetails?: boolean;
+  highlightUnitIds?: string[];
   onSelectUnit: (id: string | null) => void;
   onMoveTo: (to: Pos) => void;
   onAttack: (defenderId: string) => void;
@@ -113,6 +114,7 @@ export function BattleBoard(p: BattleBoardProps) {
         const cx = u.position.x * cellSize;
         const cy = u.position.y * cellSize;
         const isSelected = u.id === selectedUnitId;
+        const isHighlighted = !!p.highlightUnitIds?.includes(u.id);
         const isAttackable = enemySet.has(u.id);
         const isSpent = canAct(u.side) && u.hasActed === true && u.hasMoved === true;
         const onClick = () => {
@@ -137,8 +139,8 @@ export function BattleBoard(p: BattleBoardProps) {
               width={cellSize - 8} height={cellSize - 8}
               rx="3"
               fill={SIDE_FILL[u.side]}
-              stroke={isSelected ? '#d4a017' : 'rgba(0,0,0,0.3)'}
-              strokeWidth={isSelected ? 3 : 1.2}
+              stroke={isSelected || isHighlighted ? '#d4a017' : 'rgba(0,0,0,0.3)'}
+              strokeWidth={isSelected || isHighlighted ? 3 : 1.2}
             />
             <g transform={`translate(${(cellSize - 8) * 0.1}, ${(cellSize - 8) * 0.1}) scale(${(cellSize - 8) * 0.032})`}
                style={{ color: SIDE_TEXT[u.side] }}>

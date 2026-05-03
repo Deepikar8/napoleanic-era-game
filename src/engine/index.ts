@@ -7,3 +7,4 @@ export * from './turn';
 export * from './patch';
 export * from './preview';
 export * from './ai';
+export * from './replay';
