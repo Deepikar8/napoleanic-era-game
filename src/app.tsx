@@ -8,6 +8,7 @@ import { DispatchScreen } from './ui/DispatchScreen';
 import { HelpOverlay } from './ui/HelpOverlay';
 import { CampaignEndScreen } from './ui/CampaignEndScreen';
 import { ErrorToast } from './ui/ErrorToast';
+import { TutorialHint } from './ui/TutorialHint';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { AttackPreview } from './ui/AttackPreview';
@@ -59,6 +60,7 @@ function BattleScreen() {
           </div>
           <div className="text-xs opacity-80">{scenario.title}</div>
         </header>
+        <TutorialHint />
         <BattleBoard
           scenario={scenario}
           state={state}
