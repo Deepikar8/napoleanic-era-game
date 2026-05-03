@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Side } from './engine/types';
 import { useGame } from './state/store';
 import { Splash } from './ui/Splash';
@@ -53,6 +53,34 @@ function BattleScreen() {
     return () => clearTimeout(t);
   }, [endTurnArmed]);
 
+  // Keyboard shortcuts: Space=end turn, U=undo, Esc=deselect, ?=help
+  const armedRef = useRef(false);
+  armedRef.current = endTurnArmed;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      const g = useGame.getState();
+      if (g.isAnimating || !g.state || !g.scenario || g.screen !== 'battle') return;
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (armedRef.current) { setEndTurnArmed(false); g.doEndTurn(); }
+        else setEndTurnArmed(true);
+      } else if (e.key === 'u' || e.key === 'U') {
+        e.preventDefault();
+        g.undo();
+      } else if (e.key === 'Escape') {
+        g.selectUnit(null);
+        setEndTurnArmed(false);
+      } else if (e.key === '?' || e.key === '/') {
+        g.toggleHelp();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   if (!state || !scenario) return <Splash />;
 
   const COALITION: Side[] = ['austrian', 'russian'];
@@ -75,7 +103,7 @@ function BattleScreen() {
   const objectives = summarizeVictory(state, scenario.victory).filter(o => o.for === 'french');
 
   return (
-    <div className="min-h-full p-4 grid grid-cols-[1fr_22rem] gap-4">
+    <div className="min-h-full p-4 grid grid-cols-1 md:grid-cols-[1fr_22rem] gap-4">
       <UnitSpriteDefs />
       <div className="flex flex-col">
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">

@@ -43,6 +43,14 @@ export function HelpOverlay() {
 
         <h3 className="font-bold mt-3">Morale (hidden)</h3>
         <p className="text-sm">Each unit has a hidden morale of 1 (Conscript), 2 (Veteran), or 3 (Elite). The defender's morale is revealed the first time they're attacked.</p>
+
+        <h3 className="font-bold mt-3">Keyboard shortcuts</h3>
+        <ul className="list-disc list-inside text-sm">
+          <li><kbd className="px-1 border border-ink/40 rounded text-xs">Space</kbd> — end turn (press once to arm, again to confirm)</li>
+          <li><kbd className="px-1 border border-ink/40 rounded text-xs">U</kbd> — undo last action this turn</li>
+          <li><kbd className="px-1 border border-ink/40 rounded text-xs">Esc</kbd> — deselect / cancel</li>
+          <li><kbd className="px-1 border border-ink/40 rounded text-xs">?</kbd> — open or close this help</li>
+        </ul>
       </div>
     </div>
   );

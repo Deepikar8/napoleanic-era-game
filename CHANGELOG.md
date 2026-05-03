@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.6.0 — 2026-05-03
+
+The "polish the rest of the open list" pass.
+
+### Added
+- **Unit tooltip on hover.** Hovering any unit (own, enemy, coalition partner) shows a small popover with type code, formation, facing, strength, and morale (or `?` if unrevealed). The terrain tooltip from v1.2.0 now extends seamlessly into a unit panel when the cell is occupied.
+- **Per-event sounds.** Attack thump on `attack-resolved`, low gong on `unit-eliminated`, descending slide on `unit-retreated`. Plays both for the player's own attacks and during AI-turn animation steps. Mute toggle on the splash silences everything.
+- **Keyboard shortcuts.** `Space` end turn (two-press arm/confirm), `U` undo, `Esc` deselect, `?` toggle help. Documented in the help overlay.
+- **Save/load round-trip test.** New `save.test.ts` case constructs a real played-out Wertingen state (move + end turn), saves and reloads, and verifies every nested field matches. Confirms the engine state is JSON-clean.
+
+### Changed
+- **Mute toggle promoted** from tiny footer text to a real checkbox alongside the Solo toggle on the splash, with explanatory subtext.
+- **Sidebar collapses on narrow viewports.** Below 768px, UnitPanel + AttackPreview + BattleLog stack below the board instead of sitting in a 22rem column. Phone viewports get a usable layout.
+- Splash version footer updated.
+
 ## v1.5.0 — 2026-05-03
 
 The "feedback / payoff" pass.

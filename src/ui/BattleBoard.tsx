@@ -117,8 +117,8 @@ export function BattleBoard(p: BattleBoardProps) {
                 else if (selected) { p.onSelectUnit(null); setTooltipPos(null); }
                 else setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : { x, y });
               }}
-              onMouseEnter={() => { if (!selected) setTooltipPos({ x, y }); }}
-              onMouseLeave={() => { if (!selected) setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : prev); }}
+              onMouseEnter={() => setTooltipPos({ x, y })}
+              onMouseLeave={() => setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : prev)}
               style={{ cursor: isMove ? 'pointer' : 'default' }}
             />
           );
@@ -143,8 +143,14 @@ export function BattleBoard(p: BattleBoardProps) {
             key={u.id}
             transform={`translate(${cx + 4}, ${cy + 4})`}
             onClick={onClick}
-            onMouseEnter={() => !canAct(u.side) && p.onHoverEnemy(u.id)}
-            onMouseLeave={() => p.onHoverEnemy(null)}
+            onMouseEnter={() => {
+              setTooltipPos(u.position);
+              if (!canAct(u.side)) p.onHoverEnemy(u.id);
+            }}
+            onMouseLeave={() => {
+              setTooltipPos(prev => prev && prev.x === u.position.x && prev.y === u.position.y ? null : prev);
+              p.onHoverEnemy(null);
+            }}
             style={{ cursor: 'pointer', opacity: isSpent ? 0.45 : 1 }}
           >
             {isAttackable && (
@@ -193,18 +199,21 @@ export function BattleBoard(p: BattleBoardProps) {
         );
       })}
 
-      {/* Terrain tooltip */}
+      {/* Tile + unit tooltip */}
       {tooltipPos && (() => {
         const ter = scenario.tiles.find(t => posEq(t.pos, tooltipPos))?.terrain ?? 'plain';
         const info = TERRAIN_INFO[ter];
         const occupant = state.units.find(u => posEq(u.position, tooltipPos));
-        const tipW = 160; const tipH = occupant ? 56 : 40;
-        // place tooltip above the cell when possible, else below
+        const tipW = 180;
+        const tipH = occupant ? 84 : 40;
         const placeAbove = tooltipPos.y > 0;
         const tx = Math.min(Math.max(tooltipPos.x * cellSize + cellSize / 2 - tipW / 2, 2), w - tipW - 2);
         const ty = placeAbove
           ? tooltipPos.y * cellSize - tipH - 4
           : tooltipPos.y * cellSize + cellSize + 4;
+        const moraleStr = occupant
+          ? (occupant.moraleRevealed ? '★'.repeat(occupant.morale) : '?')
+          : '';
         return (
           <g pointerEvents="none">
             <rect x={tx} y={ty} width={tipW} height={tipH} rx={4}
@@ -216,9 +225,18 @@ export function BattleBoard(p: BattleBoardProps) {
               {info.effect}
             </text>
             {occupant && (
-              <text x={tx + 8} y={ty + 46} fontSize="9" fill="#d4a017">
-                {occupant.name ?? occupant.id} · {occupant.side}
-              </text>
+              <>
+                <line x1={tx + 6} y1={ty + 36} x2={tx + tipW - 6} y2={ty + 36} stroke="#d4a017" strokeWidth={0.5} opacity={0.6} />
+                <text x={tx + 8} y={ty + 50} fontSize="10" fontWeight="700" fill="#d4a017">
+                  {occupant.name ?? occupant.id} ({occupant.side})
+                </text>
+                <text x={tx + 8} y={ty + 64} fontSize="9" fill="#f5f0e6">
+                  {TYPE_BADGE[occupant.type].code} · {occupant.formation} · {occupant.facing}
+                </text>
+                <text x={tx + 8} y={ty + 78} fontSize="9" fill="#f5f0e6">
+                  Strength {occupant.strength}/4 · Morale {moraleStr}
+                </text>
+              </>
             )}
           </g>
         );

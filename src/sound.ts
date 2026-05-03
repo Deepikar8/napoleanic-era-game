@@ -37,3 +37,28 @@ export const playFifeFlourish = () => {
   const notes = [880, 988, 1175, 1397, 1175, 988, 880];
   notes.forEach((n, i) => setTimeout(() => beep(n, 140, 0.1, 'triangle'), i * 130));
 };
+
+export const playAttackThump = () => {
+  beep(80, 90, 0.28, 'square');
+  setTimeout(() => beep(55, 110, 0.22, 'square'), 50);
+};
+
+export const playEliminationGong = () => {
+  beep(60, 240, 0.22, 'sawtooth');
+  setTimeout(() => beep(120, 320, 0.16, 'triangle'), 70);
+};
+
+export const playRetreatSlide = () => {
+  if (muted) return;
+  const c = ensure(); if (!c) return;
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, c.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(160, c.currentTime + 0.25);
+  g.gain.value = 0.18;
+  osc.connect(g).connect(c.destination);
+  osc.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.25);
+  osc.stop(c.currentTime + 0.25);
+};

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { localStorageBackend, newRunId } from '../../src/state/save';
 import type { GameState } from '../../src/engine/types';
+import { wertingen } from '../../src/scenarios/01-wertingen';
+import { beginBattle, moveUnit, endTurn } from '../../src/engine';
 
 const sampleState = (): GameState => ({
   schemaVersion: 1, campaignId: 'ulm-austerlitz-1805',
@@ -34,5 +36,26 @@ describe('save backend', () => {
     }));
     expect(localStorageBackend.load('bad')).toBeNull();
     expect(localStorageBackend.list()).toHaveLength(0);
+  });
+
+  it('preserves a real played-out state through save and load', () => {
+    // Build a non-trivial Wertingen state: a move and a turn-end.
+    const ctx = { tiles: wertingen.tiles, grid: wertingen.grid };
+    let s = beginBattle(wertingen);
+    s = moveUnit(s, 'fr-lasalle', { x: 2, y: 3 }, ctx).state;
+    s = endTurn(s).state;
+
+    const id = newRunId();
+    localStorageBackend.save({ runId: id, savedAt: 100, state: s });
+    const loaded = localStorageBackend.load(id);
+    expect(loaded).not.toBeNull();
+    expect(loaded!.state).toEqual(s);
+
+    // Spot-check load preserves nested structures
+    const lasalle = loaded!.state.units.find(u => u.id === 'fr-lasalle')!;
+    expect(lasalle.position).toEqual({ x: 2, y: 3 });
+    expect(loaded!.state.log.length).toBe(s.log.length);
+    expect(loaded!.state.currentSide).toBe(s.currentSide);
+    expect(loaded!.state.turn).toBe(s.turn);
   });
 });

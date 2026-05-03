@@ -5,7 +5,20 @@ import { runAiTurn } from '../engine/ai';
 import { replayUpTo, eventUnitIds } from '../engine/replay';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
-import { playTurnDrum, playFifeFlourish, setMuted as soundSetMuted } from '../sound';
+import {
+  playTurnDrum, playFifeFlourish, setMuted as soundSetMuted,
+  playAttackThump, playEliminationGong, playRetreatSlide,
+} from '../sound';
+import type { BattleEvent } from '../engine/types';
+
+const playEventSound = (e: BattleEvent) => {
+  switch (e.kind) {
+    case 'attack-resolved':  playAttackThump(); break;
+    case 'unit-eliminated':  playEliminationGong(); break;
+    case 'unit-retreated':   playRetreatSlide(); break;
+    default: /* silent */ break;
+  }
+};
 
 export type Screen = 'splash' | 'campaign-menu' | 'dispatch' | 'battle' | 'battle-end' | 'campaign-end' | 'replay';
 
@@ -99,6 +112,7 @@ export const useGame = create<Store>((set, get) => ({
     if (!state || !selectedUnitId) return;
     try {
       const r = attack(state, selectedUnitId, defenderId);
+      for (const ev of r.events) playEventSound(ev);
       set({ state: r.state, history: [...history, r.state], selectedUnitId: null });
     } catch (e) { get().flashError(e instanceof Error ? e.message : String(e)); }
   },
@@ -177,6 +191,7 @@ export const useGame = create<Store>((set, get) => ({
         const ev = fullLog[i];
         const intermediate = replayUpTo(aiScenario, stateBeforeAi.decisionsTaken, fullLog, i);
         set({ state: intermediate, animatingHighlightIds: eventUnitIds(ev) });
+        playEventSound(ev);
 
         if (i >= endIdx) {
           setTimeout(finish, stepDelay);

@@ -34,17 +34,16 @@ export function Splash() {
           })()}
           <div><Button onClick={() => goto('campaign-menu')} kind="secondary">Campaign Menu</Button></div>
           <div><Button onClick={() => goto('replay')} kind="secondary">Replay last run</Button></div>
-          <label className="flex items-center justify-center gap-2 text-sm pt-2 cursor-pointer select-none">
+          <label className="flex items-center justify-center gap-2 text-base pt-2 cursor-pointer select-none">
             <input type="checkbox" checked={solo} onChange={e => setSolo(e.target.checked)} />
             <span>Play solo (AI runs the Coalition)</span>
           </label>
-        </div>
-        <p className="mt-10 text-xs opacity-50">
-          v1.5.0
-          <label className="ml-2 cursor-pointer select-none">
-            <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} /> Mute
+          <label className="flex items-center justify-center gap-2 text-base cursor-pointer select-none">
+            <input type="checkbox" checked={muted} onChange={e => setMuted(e.target.checked)} />
+            <span>Mute (no drum or fife sounds)</span>
           </label>
-        </p>
+        </div>
+        <p className="mt-10 text-xs opacity-50">v1.6.0</p>
       </div>
     </main>
   );
