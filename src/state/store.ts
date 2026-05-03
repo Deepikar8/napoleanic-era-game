@@ -51,7 +51,7 @@ export const useGame = create<Store>((set, get) => ({
     const initial = beginBattle(scenario);
     set({
       runId: newRunId(), state: initial, scenario,
-      history: [initial], screen: 'battle',
+      history: [initial], screen: 'dispatch',
       selectedUnitId: null, hoveredEnemyId: null,
     });
   },
@@ -158,7 +158,7 @@ export const useGame = create<Store>((set, get) => ({
       ...state.outcomes,
       { scenarioId: state.scenarioId, victor: v.kind === 'decided' ? v.victor : state.currentSide, turnsTaken: state.turn },
     ];
-    set({ state: nextState, scenario: next, history: [nextState], screen: 'battle' });
+    set({ state: nextState, scenario: next, history: [nextState], screen: 'dispatch' });
     get().saveCurrent();
   },
 }));
