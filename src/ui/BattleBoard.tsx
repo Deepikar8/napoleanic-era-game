@@ -1,4 +1,4 @@
-import type { GameState, Pos, Scenario, Unit } from '../engine/types';
+import type { GameState, Pos, Scenario, Side, Unit } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
@@ -38,7 +38,11 @@ export function BattleBoard(p: BattleBoardProps) {
     ? state.units.find(u => u.id === selectedUnitId) ?? null
     : null;
 
-  const moves = selected && selected.side === state.currentSide && !selected.hasMoved
+  const COALITION: Side[] = ['austrian', 'russian'];
+  const canAct = (side: Side) =>
+    state.currentSide === 'french' ? side === 'french' : COALITION.includes(side);
+
+  const moves = selected && canAct(selected.side) && !selected.hasMoved
     ? legalMoves(selected, state.units, scenario)
     : [];
   const moveSet = new Set(moves.map(posKey));
@@ -90,7 +94,7 @@ export function BattleBoard(p: BattleBoardProps) {
             key={u.id}
             transform={`translate(${cx + 4}, ${cy + 4})`}
             onClick={onClick}
-            onMouseEnter={() => u.side !== state.currentSide && p.onHoverEnemy(u.id)}
+            onMouseEnter={() => !canAct(u.side) && p.onHoverEnemy(u.id)}
             onMouseLeave={() => p.onHoverEnemy(null)}
             style={{ cursor: 'pointer' }}
           >

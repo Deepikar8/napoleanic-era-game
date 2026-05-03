@@ -6,16 +6,27 @@ import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { resolveAttack } from './combat';
 
-const sideOrder: Side[] = ['french', 'austrian', 'russian'];
+const COALITION: Side[] = ['austrian', 'russian'];
 
 function nextSide(current: Side, units: Unit[]): Side {
-  const start = sideOrder.indexOf(current);
-  for (let i = 1; i <= sideOrder.length; i++) {
-    const cand = sideOrder[(start + i) % sideOrder.length];
-    if (units.some(u => u.side === cand)) return cand;
+  if (current === 'french') {
+    for (const s of COALITION) {
+      if (units.some(u => u.side === s)) return s;
+    }
+    return 'french';
   }
-  return current;
+  return 'french';
 }
+
+// Both coalition sides act together in one combined turn.
+const canAct = (unitSide: Side, currentSide: Side): boolean =>
+  currentSide === 'french'
+    ? unitSide === 'french'
+    : COALITION.includes(unitSide);
+
+const areSameTeam = (a: Side, b: Side): boolean =>
+  (a === 'french' && b === 'french') ||
+  (COALITION.includes(a) && COALITION.includes(b));
 
 export function beginBattle(scenario: Scenario): GameState {
   return {
@@ -51,7 +62,7 @@ export function moveUnit(
 ): { state: GameState; events: BattleEvent[] } {
   const unit = state.units.find(u => u.id === unitId);
   if (!unit) throw new Error(`Unit ${unitId} not found`);
-  if (unit.side !== state.currentSide) throw new Error(`${unitId} is not your unit this turn`);
+  if (!canAct(unit.side, state.currentSide)) throw new Error(`${unitId} is not your unit this turn`);
   if (unit.hasMoved) throw new Error(`${unitId} already moved this turn`);
 
   if (ctx) {
@@ -87,8 +98,8 @@ export function attack(
   const d = state.units.find(u => u.id === defenderId);
   if (!a) throw new Error(`Attacker ${attackerId} not found`);
   if (!d) throw new Error(`Defender ${defenderId} not found`);
-  if (a.side !== state.currentSide) throw new Error(`${attackerId} is not your unit`);
-  if (a.side === d.side) throw new Error(`Cannot attack a friendly unit`);
+  if (!canAct(a.side, state.currentSide)) throw new Error(`${attackerId} is not your unit`);
+  if (areSameTeam(a.side, d.side)) throw new Error(`Cannot attack a friendly unit`);
   if (a.hasActed) throw new Error(`${attackerId} already acted this turn`);
   if (chebyshev(a.position, d.position) !== 1) throw new Error(`Units not adjacent`);
 
@@ -108,7 +119,7 @@ export function changeFormation(
 ): { state: GameState; events: BattleEvent[] } {
   const unit = state.units.find(u => u.id === unitId);
   if (!unit) throw new Error(`Unit ${unitId} not found`);
-  if (unit.side !== state.currentSide) throw new Error(`Not your unit`);
+  if (!canAct(unit.side, state.currentSide)) throw new Error(`Not your unit`);
   if (unit.hasActed) throw new Error(`Already acted this turn`);
   if (unit.formation === to) return { state, events: [] };
 
@@ -127,11 +138,12 @@ export function changeFormation(
 export function endTurn(state: GameState): { state: GameState; events: BattleEvent[] } {
   const events: BattleEvent[] = [{ kind: 'turn-ended', turn: state.turn, side: state.currentSide }];
   const ns = nextSide(state.currentSide, state.units);
-  const isNewRound = sideOrder.indexOf(ns) <= sideOrder.indexOf(state.currentSide);
+  const isNewRound = ns === 'french';
   const newTurn = isNewRound ? state.turn + 1 : state.turn;
-  const cleared = state.units.map(u =>
-    u.side === ns ? { ...u, hasMoved: false as const, hasActed: false as const } : u,
-  );
+  const cleared = state.units.map(u => {
+    const reset = ns === 'french' ? u.side === 'french' : COALITION.includes(u.side);
+    return reset ? { ...u, hasMoved: false as const, hasActed: false as const } : u;
+  });
   events.push({ kind: 'turn-started', turn: newTurn, side: ns });
   return {
     state: {
