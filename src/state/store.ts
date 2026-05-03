@@ -20,6 +20,24 @@ const playEventSound = (e: BattleEvent) => {
   }
 };
 
+const unitName = (id: string, units: { id: string; name?: string }[]): string =>
+  units.find(u => u.id === id)?.name ?? id;
+
+const captionForEvent = (e: BattleEvent, units: { id: string; name?: string }[]): string | null => {
+  switch (e.kind) {
+    case 'unit-moved':        return `${unitName(e.unitId, units)} moved to (${e.to.x}, ${e.to.y})`;
+    case 'formation-changed': return `${unitName(e.unitId, units)} formed ${e.to}`;
+    case 'attack-resolved':   return `${unitName(e.attackerId, units)} attacks ${unitName(e.defenderId, units)} — ${e.result}`;
+    case 'morale-revealed':   return `${unitName(e.unitId, units)} morale: ${'★'.repeat(e.morale)}`;
+    case 'unit-eliminated':   return `${unitName(e.unitId, units)} eliminated`;
+    case 'unit-retreated':    return `${unitName(e.unitId, units)} retreats`;
+    case 'turn-started':
+    case 'turn-ended':
+    case 'victory':
+      return null;
+  }
+};
+
 export type Screen = 'splash' | 'campaign-menu' | 'dispatch' | 'battle' | 'battle-end' | 'campaign-end' | 'replay';
 
 interface Store {
@@ -40,6 +58,7 @@ interface Store {
   errorMessage: string | null;
   isAnimating: boolean;
   animatingHighlightIds: string[];
+  animatingMessage: string | null;
 
   // Actions
   startNewRun(scenario: Scenario): void;
@@ -74,6 +93,7 @@ export const useGame = create<Store>((set, get) => ({
   errorMessage: null,
   isAnimating: false,
   animatingHighlightIds: [],
+  animatingMessage: null,
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
@@ -175,6 +195,15 @@ export const useGame = create<Store>((set, get) => ({
       const startIdx = stateBeforeAi.log.length;       // first new event index
       const endIdx = ai.state.log.length - 1;          // last event index in final log
 
+      const fullLog = ai.state.log;
+
+      // Did the AI take any meaningful action? (Anything other than the
+      // turn-ended/turn-started bookends.) If not, surface that to the
+      // player instead of an empty animation.
+      const aiActed = fullLog
+        .slice(startIdx, endIdx + 1)
+        .some(e => e.kind !== 'turn-ended' && e.kind !== 'turn-started');
+
       // No new events to animate — apply directly.
       if (endIdx < startIdx) {
         set({
@@ -186,17 +215,18 @@ export const useGame = create<Store>((set, get) => ({
         return;
       }
 
-      set({ isAnimating: true, animatingHighlightIds: [] });
+      const stoodFirmMsg = 'Coalition stood firm — no movement this turn.';
+      const initialMsg = aiActed ? 'Coalition is moving…' : stoodFirmMsg;
+      set({ isAnimating: true, animatingHighlightIds: [], animatingMessage: initialMsg });
 
-      const fullLog = ai.state.log;
       let i = startIdx;
-      const stepDelay = 600;
+      const stepDelay = 900;
 
       const finish = () => {
         set({
           state: ai.state, history: [ai.state],
           screen: v2.kind === 'decided' ? 'battle-end' : 'battle',
-          isAnimating: false, animatingHighlightIds: [],
+          isAnimating: false, animatingHighlightIds: [], animatingMessage: null,
         });
         if (v2.kind === 'decided') playFifeFlourish();
         if (runId) get().saveCurrent();
@@ -209,11 +239,17 @@ export const useGame = create<Store>((set, get) => ({
 
         const ev = fullLog[i];
         const intermediate = replayUpTo(aiScenario, stateBeforeAi.decisionsTaken, fullLog, i);
-        set({ state: intermediate, animatingHighlightIds: eventUnitIds(ev) });
+        const caption = captionForEvent(ev, intermediate.units);
+        set({
+          state: intermediate,
+          animatingHighlightIds: eventUnitIds(ev),
+          animatingMessage: caption ?? (aiActed ? 'Coalition is moving…' : stoodFirmMsg),
+        });
         playEventSound(ev);
 
         if (i >= endIdx) {
-          setTimeout(finish, stepDelay);
+          // Hold the last frame a beat longer so the caption is readable.
+          setTimeout(finish, stepDelay + (aiActed ? 0 : 600));
           return;
         }
         i++;

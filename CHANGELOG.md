@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.7.2 — 2026-05-03
+
+Reported by playtester: AI animation was unreadable, defensive scenarios looked broken, and the side log didn't update during AI turns.
+
+### Fixed
+- **BattleLog stayed frozen during AI animation.** Real bug: `replayUpTo` rebuilt unit positions, strengths, etc. but stripped the event log. The right-side BattleLog reads `state.log`, so during AI animation it showed only the initial turn-started event. Now `replayUpTo` returns `state.log = events.slice(0, idx + 1)`. Each animation step adds the AI's event to the log in real time. New test verifies log slices match for every rebuild index.
+
+### Changed
+- **AI animation slowed from 600ms to 900ms per step** so each move is readable.
+- **Animation banner now describes the active step** instead of a static "Coalition is moving…": "Auffenberg moved to (4, 4)", "Murat attacks Spangen — defender retreats", etc.
+- **"Coalition stood firm" banner** when a defensive AI took no actions this turn (e.g. Wertingen's Austrians sitting tight). Replaces what used to look like an empty/broken animation with a clear "they chose to hold" message.
+
 ## v1.7.1 — 2026-05-03
 
 Reported by playtester: "It does not let me end turn after winning, it is asking to confirm as I still have move".

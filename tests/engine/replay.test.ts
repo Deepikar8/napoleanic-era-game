@@ -37,6 +37,21 @@ describe('replay rebuild', () => {
     }
   });
 
+  it('preserves the event log up to the rebuild index', () => {
+    const ctx = { tiles: wertingen.tiles, grid: wertingen.grid };
+    let s = beginBattle(wertingen);
+    s = moveUnit(s, 'fr-lasalle', { x: 2, y: 3 }, ctx).state;
+    s = endTurn(s).state;
+
+    // Rebuild at intermediate steps and verify log slices match.
+    const fullLog = s.log;
+    for (let i = 0; i <= fullLog.length - 1; i++) {
+      const r = replayUpTo(wertingen, s.decisionsTaken, fullLog, i);
+      expect(r.log.length).toBe(i + 1);
+      expect(r.log).toEqual(fullLog.slice(0, i + 1));
+    }
+  });
+
   it('handles attack-resolved events (strength + hasActed mutations)', () => {
     const tiny: Scenario = {
       id: 'tiny',

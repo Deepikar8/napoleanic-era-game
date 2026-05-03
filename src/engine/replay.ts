@@ -84,7 +84,10 @@ export function replayUpTo(
   for (let i = 1; i <= last; i++) {
     s = applyEvent(s, events[i]);
   }
-  return s;
+  // Preserve the log up to this point so consumers (battle log, replay log)
+  // see the events that have happened so far. applyEvent intentionally doesn't
+  // mutate log to keep the per-event mutation pure.
+  return { ...s, log: events.slice(0, Math.max(0, last + 1)) };
 }
 
 export function eventUnitIds(e: BattleEvent): string[] {

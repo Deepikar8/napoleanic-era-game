@@ -40,7 +40,7 @@ function BattleScreen() {
     state, scenario, selectedUnitId, hoveredEnemyId,
     selectUnit, hoverEnemy, doMove, doAttack, doFormation, doEndTurn, undo,
     saveCurrent, toggleHelp, showDetails, toggleDetails,
-    isAnimating, animatingHighlightIds,
+    isAnimating, animatingHighlightIds, animatingMessage,
   } = useGame();
 
   useEffect(() => { saveCurrent(); }, [state?.turn, state?.currentSide]);
@@ -156,8 +156,8 @@ function BattleScreen() {
           onHoverEnemy={hoverEnemy}
         />
         {isAnimating && (
-          <div className="mt-2 self-center bg-ink text-parchment px-4 py-2 rounded shadow text-sm font-semibold pointer-events-none">
-            {sideLabel === 'coalition' ? 'Coalition' : sideLabel.charAt(0).toUpperCase() + sideLabel.slice(1)} is moving…
+          <div className="mt-2 self-center bg-ink text-parchment px-4 py-2 rounded shadow text-sm font-semibold pointer-events-none max-w-md text-center">
+            {animatingMessage ?? `${sideLabel === 'coalition' ? 'Coalition' : sideLabel.charAt(0).toUpperCase() + sideLabel.slice(1)} is moving…`}
           </div>
         )}
         <div className="mt-3 flex gap-2 items-center">
