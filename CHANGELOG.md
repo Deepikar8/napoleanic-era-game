@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.2.2 — 2026-05-03
+
+Found by playtest.
+
+### Fixed
+- **Towns are now passable.** `terrainCost('town')` was `Infinity`, which made every scenario with a town in a victory or path-of-attack location effectively unwinnable. Worst case: **Elchingen** (the kid's complaint — couldn't cross the bridge because the only south exit is the village, which was impassable) and **Ulm** (the entire 2×2 centre was sealed off). Towns now cost 1 to enter; defenders inside still get +1, as the help overlay always claimed.
+- Removed `game.png` artifact from the repo.
+
+### Added
+- Regression test reproducing the Elchingen bridge geometry: infantry north of a river+bridge can now reach a town tile south of the bridge.
+
 ## v1.2.1 — 2026-05-03
 
 Hotfixes from first real playthrough.

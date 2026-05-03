@@ -27,8 +27,30 @@ describe('movement', () => {
     expect(terrainCost('marsh')).toBe(3);
     expect(terrainCost('road')).toBe(1);
     expect(terrainCost('bridge')).toBe(1);
-    expect(terrainCost('town')).toBe(Infinity);
+    expect(terrainCost('town')).toBe(1);
     expect(terrainCost('river')).toBe(Infinity);
+  });
+
+  it('infantry north of a bridge can step onto a town tile south of it', () => {
+    // Reproduces the Elchingen bridge bug: river row at y=1 with a bridge at
+    // (1,1), town immediately south at (1,2). Without the fix, infantry at
+    // (1,0) cannot reach (1,2) because the only escape from the bridge is
+    // through the town.
+    const inf = u({ type: 'line-infantry', formation: 'column', position: { x: 1, y: 0 } });
+    const scenario = {
+      grid: { width: 3, height: 3 },
+      tiles: [
+        { pos: { x: 0, y: 1 }, terrain: 'river' as const },
+        { pos: { x: 1, y: 1 }, terrain: 'bridge' as const },
+        { pos: { x: 2, y: 1 }, terrain: 'river' as const },
+        { pos: { x: 1, y: 2 }, terrain: 'town' as const },
+      ],
+    };
+    const moves = legalMoves(inf, [inf], scenario);
+    const reaches = (x: number, y: number) =>
+      moves.some(m => m.x === x && m.y === y);
+    expect(reaches(1, 1)).toBe(true);   // bridge
+    expect(reaches(1, 2)).toBe(true);   // town beyond
   });
 
   it('legalMoves returns reachable tiles within budget on plain', () => {

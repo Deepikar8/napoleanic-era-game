@@ -18,7 +18,7 @@ export const terrainCost = (t: TerrainKind): number => {
     case 'forest': return 2;
     case 'hill':   return 2;
     case 'marsh':  return 3;
-    case 'town':   return Infinity;
+    case 'town':   return 1;          // passable (urban) — defenders still get +1
     case 'river':  return Infinity;
   }
 };
