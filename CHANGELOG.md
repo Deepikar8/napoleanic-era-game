@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.7.5 — 2026-05-03
+
+Reported by playtester: "what does morale mean?".
+
+### Changed
+- **UnitPanel morale row spells it out.** Was `?` or `★★`. Now `★★ Veteran` / `★★★ Elite` etc. when revealed; `? (revealed on first attack)` when hidden. New italic footer in the panel: "Morale is how steady the troops are. Higher = harder to break. Hidden until they're attacked."
+- **Help overlay Morale section expanded** with the three named ranks (Conscript / Veteran / Elite), the math (morale adds straight to combat score, so a 4-strength elite is 7 vs a 4-strength conscript's 5), and the strategic implication that the first attack of a battle doubles as a probe to learn what you're really up against.
+
 ## v1.7.4 — 2026-05-03
 
 Reported by playtester: "where is replay today, I cannot find it".

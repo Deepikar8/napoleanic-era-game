@@ -87,8 +87,14 @@ export function HelpOverlay() {
         </ul>
         <p className="text-xs italic opacity-80 mt-1">Change formation by selecting your unit and tapping Line / Column / Square in the action bar. Changing formation uses the unit's action for the turn.</p>
 
-        <h3 className="font-bold mt-3">Morale (hidden)</h3>
-        <p className="text-sm">Each unit has a hidden morale of 1 (Conscript), 2 (Veteran), or 3 (Elite). The defender's morale is revealed the first time they're attacked.</p>
+        <h3 className="font-bold mt-3">Morale (hidden until attacked)</h3>
+        <p className="text-sm">Morale is how steady the troops are — how well they hold up under fire instead of running. Each unit has a hidden value:</p>
+        <ul className="list-disc list-inside text-sm mt-1">
+          <li>★ <strong>Conscript</strong> (1) — green, scared, breaks easily</li>
+          <li>★★ <strong>Veteran</strong> (2) — solid line soldiers</li>
+          <li>★★★ <strong>Elite</strong> (3) — Old Guard, hand-picked, almost never breaks</li>
+        </ul>
+        <p className="text-sm mt-2">Morale adds straight to the combat score, so a 4-strength elite (4+3=7) is much stronger than a 4-strength conscript (4+1=5) that looks the same on the board. The defender's morale is hidden until the <em>first time</em> they're attacked — your first attack of a battle is always partly a probe to see what you're really up against.</p>
 
         <h3 className="font-bold mt-3">Solo mode &amp; AI difficulty</h3>
         <p className="text-sm">When <strong>Play solo</strong> is on (set on the splash), the computer plays the Coalition during their turns. Three difficulty levels:</p>

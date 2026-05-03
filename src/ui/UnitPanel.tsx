@@ -1,4 +1,4 @@
-import type { Unit } from '../engine/types';
+import type { Unit, Morale } from '../engine/types';
 import { Panel } from './shared';
 
 const TYPE_LABEL: Record<Unit['type'], string> = {
@@ -11,6 +11,17 @@ const TYPE_LABEL: Record<Unit['type'], string> = {
   'horse-artillery': 'Horse Artillery',
 };
 
+const MORALE_LABEL: Record<Morale, string> = {
+  1: 'Conscript',
+  2: 'Veteran',
+  3: 'Elite',
+};
+
+const moraleDisplay = (unit: Unit): string =>
+  unit.moraleRevealed
+    ? `${'★'.repeat(unit.morale)} ${MORALE_LABEL[unit.morale]}`
+    : '? (revealed on first attack)';
+
 export function UnitPanel({ unit }: { unit: Unit | null }) {
   if (!unit) return <Panel title="No unit selected"><p className="text-sm opacity-60">Tap a unit on the board.</p></Panel>;
   return (
@@ -21,8 +32,11 @@ export function UnitPanel({ unit }: { unit: Unit | null }) {
         <Row label="Side" value={unit.side} />
         <Row label="Formation" value={unit.formation} />
         <Row label="Strength" value={`${unit.strength} / 4`} />
-        <Row label="Morale" value={unit.moraleRevealed ? '★'.repeat(unit.morale) : '?'} />
+        <Row label="Morale" value={moraleDisplay(unit)} />
       </div>
+      <p className="mt-2 text-xs italic opacity-70">
+        Morale is how steady the troops are. Higher = harder to break. Hidden until they're attacked.
+      </p>
     </Panel>
   );
 }
