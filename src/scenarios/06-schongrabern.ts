@@ -1,4 +1,4 @@
-import type { Scenario, Unit } from '../engine/types';
+import type { Scenario, Unit, Decision } from '../engine/types';
 
 const u = (
   side: 'french' | 'russian',
@@ -9,6 +9,41 @@ const u = (
   position: { x, y }, facing: side === 'french' ? 'E' : 'W',
   formation: 'line', strength: 4, morale,
 });
+
+const decision: Decision = {
+  id: 'schongrabern-pre',
+  promptMd:
+    'Kutuzov has slipped away. Bagration\'s rearguard at Schöngrabern is the only force you can still catch before they cross the Thaya.\n\n**Force march through the night to engage Bagration before he can dig in — or rest the troops first?**\n\n*Note: a force march tires the army. Troops who march will fight Bagration weaker, AND will start the next battle (Austerlitz) less rested.*',
+  options: [
+    {
+      label: 'Force march through the night',
+      // Bagration easier to break (caught before fully entrenched).
+      patch: { unitOverrides: [
+        { id: 'ru-bagration', morale: 2 },  // veteran instead of elite
+      ] },
+      // Downstream: French troops at Austerlitz are tired — Vandamme and
+      // St-Cyr drop one notch in morale.
+      downstreamPatches: {
+        austerlitz: {
+          unitOverrides: [
+            { id: 'fr-soult-vandamme', morale: 2 },
+            { id: 'fr-soult-stcyr', morale: 2 },
+          ],
+        },
+      },
+    },
+    {
+      label: 'Rest the troops first',
+      // Bagration fully entrenched — even tougher.
+      patch: { unitOverrides: [
+        { id: 'ru-bagration', strength: 4, morale: 3 },
+        { id: 'ru-1',         morale: 3 },
+      ] },
+      // Downstream: Austerlitz French go in fresh — already at morale 3
+      // by default for those commanders, no change. (No downstream patch.)
+    },
+  ],
+};
 
 export const schongrabern: Scenario = {
   id: 'schongrabern',
@@ -43,6 +78,7 @@ export const schongrabern: Scenario = {
   ],
   turnLimit: 10,
   ai: { generalRule: 'defensive', triggers: [] },
+  preBattleDecision: decision,
   postBattleDispatch: '06-schongrabern-postbattle',
   tacticalHint:
     'Delaying action. Bagration has been told to die in place — he won\'t move. You must eliminate him before turn 10. He\'s on the hill (+1 defence) and almost certainly Elite morale (probe early). Pin him with infantry, flank with Murat\'s heavy cavalry, and concentrate force (adjacent friendlies give +1 attack).',

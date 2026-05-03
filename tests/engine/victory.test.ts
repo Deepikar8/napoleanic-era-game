@@ -7,7 +7,9 @@ const baseState = (over: Partial<GameState> = {}): GameState => ({
   scenarioIndex: 0, scenarioId: 'test',
   units: [], currentSide: 'french', turn: 1, phase: 'orders',
   selectedUnitId: null, log: [], decisionsTaken: [], outcomes: [],
-  pendingDecisionId: null, ...over,
+  pendingDecisionId: null,
+  pendingPatches: {}, triggersFired: [],
+  ...over,
 });
 
 const u = (over: Partial<Unit> & Pick<Unit, 'id' | 'side'>): Unit => ({

@@ -9,3 +9,4 @@ export * from './preview';
 export * from './ai';
 export * from './replay';
 export * from './sides';
+export * from './triggers';

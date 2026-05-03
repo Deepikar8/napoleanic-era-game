@@ -25,6 +25,7 @@ const areSameTeam = sameTeam;
 export function beginBattle(
   scenario: Scenario,
   takenDecisions: GameState['decisionsTaken'] = [],
+  pendingPatches: GameState['pendingPatches'] = {},
 ): GameState {
   let s = scenario;
   if (s.preBattleDecision) {
@@ -33,6 +34,15 @@ export function beginBattle(
       s = applyPatch(s, s.preBattleDecision.options[taken.optionIndex].patch);
     }
   }
+  // Consume any downstream patches earlier decisions left for this scenario.
+  const downstream = pendingPatches[s.id] ?? [];
+  for (const p of downstream) s = applyPatch(s, p);
+
+  // Strip the consumed entry (one-shot — earlier decisions don't keep firing
+  // every replay of the same scenario).
+  const remainingPatches: GameState['pendingPatches'] = { ...pendingPatches };
+  delete remainingPatches[s.id];
+
   return {
     schemaVersion: 1,
     campaignId: 'ulm-austerlitz-1805',
@@ -47,6 +57,8 @@ export function beginBattle(
     decisionsTaken: takenDecisions,
     outcomes: [],
     pendingDecisionId: null,
+    pendingPatches: remainingPatches,
+    triggersFired: [],
   };
 }
 

@@ -86,7 +86,13 @@ export interface Decision {
 
 export interface DecisionOption {
   label: string;
+  /** Patch applied immediately to the current scenario. */
   patch: ScenarioPatch;
+  /** Optional patches applied when LATER scenarios start.
+   *  Keyed by scenario id (e.g. 'krems', 'austerlitz').
+   *  The whole campaign's accumulated downstream patches live in
+   *  GameState.pendingPatches and are consumed by beginBattle. */
+  downstreamPatches?: Record<string, ScenarioPatch>;
 }
 
 export interface ScenarioPatch {
@@ -113,6 +119,10 @@ export interface Scenario {
   /** Short tactical guidance shown on the dispatch screen, separate from the
    *  in-character briefing prose. One or two sentences, plain language. */
   tacticalHint?: string;
+  /** Mid-battle scenario events that fire when a condition is met (e.g.,
+   *  reinforcements arrive when a tile is taken). Distinct from AiScript
+   *  triggers, which only emit AI actions. These apply patches to scenario data. */
+  scenarioTriggers?: ScenarioTrigger[];
 }
 
 // Events emitted by every state-changing engine call. Cumulative array forms the replay log.
@@ -129,6 +139,7 @@ export type BattleEvent =
   | { kind: 'unit-eliminated'; unitId: string }
   | { kind: 'unit-retreated'; unitId: string; from: Pos; to: Pos }
   | { kind: 'turn-ended'; turn: number; side: Side }
+  | { kind: 'trigger-fired'; triggerId: string; patch: ScenarioPatch; flavour?: string }
   | { kind: 'victory'; side: Side; reason: string };
 
 export type GamePhase = 'orders' | 'end-of-turn';
@@ -147,6 +158,26 @@ export interface GameState {
   decisionsTaken: { decisionId: string; optionIndex: number }[];
   outcomes: { scenarioId: string; victor: Side; turnsTaken: number }[];
   pendingDecisionId: string | null;
+  /** Patches accumulated by past decisions, keyed by future scenario id.
+   *  beginBattle consumes the entry for the scenario it's starting. */
+  pendingPatches: Record<string, ScenarioPatch[]>;
+  /** Stable trigger ids that have already fired this run; prevents re-fire
+   *  on subsequent turns. Indexed by scenario id + trigger position. */
+  triggersFired: string[];
+}
+
+export type ScenarioTriggerCondition =
+  | { kind: 'whenTurn'; turn: number }
+  | { kind: 'whenSideStrengthBelow'; side: Side; threshold: number }
+  | { kind: 'whenSideHasUnitOnTile'; side: Side; pos: Pos };
+
+export interface ScenarioTrigger {
+  /** Stable identifier within the scenario — used to mark fired/not. */
+  id: string;
+  when: ScenarioTriggerCondition;
+  patch: ScenarioPatch;
+  /** Optional event log entry shown to the player when the trigger fires. */
+  flavour?: string;
 }
 
 export type VictoryStatus =

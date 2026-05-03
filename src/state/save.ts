@@ -60,6 +60,9 @@ export function isValidGameState(v: unknown): v is GameState {
   if (!Array.isArray(v.outcomes)) return false;
   if (v.selectedUnitId !== null && typeof v.selectedUnitId !== 'string') return false;
   if (v.pendingDecisionId !== null && typeof v.pendingDecisionId !== 'string') return false;
+  // pendingPatches / triggersFired added in v1.11.0; missing in older saves is OK.
+  if (v.pendingPatches !== undefined && !isObject(v.pendingPatches)) return false;
+  if (v.triggersFired !== undefined && !Array.isArray(v.triggersFired)) return false;
   return true;
 }
 
@@ -73,6 +76,19 @@ export function isValidSavedRun(v: unknown): v is SavedRun {
 
 let warned = false;
 
+// Forward-compat: migrate older saves that were written before v1.11.0
+// added pendingPatches and triggersFired to GameState.
+function migrate(run: SavedRun): SavedRun {
+  return {
+    ...run,
+    state: {
+      ...run.state,
+      pendingPatches: run.state.pendingPatches ?? {},
+      triggersFired: run.state.triggersFired ?? [],
+    },
+  };
+}
+
 export const localStorageBackend: SaveBackend = {
   list() {
     if (typeof localStorage === 'undefined') return [];
@@ -84,7 +100,7 @@ export const localStorageBackend: SaveBackend = {
         const raw = localStorage.getItem(k);
         if (!raw) continue;
         const parsed: unknown = JSON.parse(raw);
-        if (isValidSavedRun(parsed)) out.push(parsed);
+        if (isValidSavedRun(parsed)) out.push(migrate(parsed));
       } catch { /* skip */ }
     }
     return out.sort((a, b) => b.savedAt - a.savedAt);
@@ -96,7 +112,7 @@ export const localStorageBackend: SaveBackend = {
     if (!raw) return null;
     try {
       const parsed: unknown = JSON.parse(raw);
-      return isValidSavedRun(parsed) ? parsed : null;
+      return isValidSavedRun(parsed) ? migrate(parsed) : null;
     } catch { return null; }
   },
 

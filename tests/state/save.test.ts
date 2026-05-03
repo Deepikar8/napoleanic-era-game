@@ -10,6 +10,7 @@ const sampleState = (): GameState => ({
   units: [], currentSide: 'french', turn: 1, phase: 'orders',
   selectedUnitId: null, log: [], decisionsTaken: [], outcomes: [],
   pendingDecisionId: null,
+  pendingPatches: {}, triggersFired: [],
 });
 
 describe('save backend', () => {

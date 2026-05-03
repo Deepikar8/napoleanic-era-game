@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.11.0 — 2026-05-03
+
+Two big-engine pieces from the design review.
+
+### Added (engine)
+- **Cross-battle decision consequences.** New optional `downstreamPatches: Record<scenarioId, ScenarioPatch>` on `DecisionOption`. When the player picks an option, the named patches accumulate in a new `GameState.pendingPatches` map; `beginBattle` consumes the entry for whichever scenario it's starting. Earlier choices now have permanent campaign-level effects.
+- **Scenario triggers.** New optional `Scenario.scenarioTriggers: ScenarioTrigger[]` field. Each trigger has a condition (`whenTurn` / `whenSideStrengthBelow` / `whenSideHasUnitOnTile`), a `ScenarioPatch` to apply when met, and an optional `flavour` string for the log/animation. Triggers fire once each (tracked via `GameState.triggersFired`), evaluated after every player action and at end of turn. New `BattleEvent` kind `'trigger-fired'` carries the patch so the replay engine can faithfully reconstruct.
+- New helper `applyPatchToState(state, patch)` for live patch application (distinct from `applyPatch(scenario, patch)` which is scenario-data only).
+- 9 new tests covering trigger conditions, no-double-fire, and pendingPatches consumption.
+- Save migration: older saves without the new `pendingPatches` / `triggersFired` fields get them filled in on load.
+
+### Added (scenarios — making it real)
+- **Haslach decision now has lasting effects.** Choosing "send the light infantry forward" now drops `fr-fr-1` at Krems to strength 3 / morale 1 (the troops are tired and battered). "Hold the rearguard intact" leaves them fresh at morale 3.
+- **New pre-Schöngrabern decision.** "Force march" weakens Bagration (caught before he can dig in) BUT downgrades Vandamme + St-Cyr at Austerlitz (the army is tired). "Rest first" makes Bagration tougher, leaves Austerlitz French units fresh.
+- **Austerlitz Russian Imperial Guard counter-attack.** A staged trigger on Pratzen Heights (6,5): the moment a French unit stands on the tile, the Russian Imperial Guard cavalry materialises east of the heights at full strength + elite morale. The kid sees the flavour text "The Russian Imperial Guard cavalry charges from reserve!" and now has to defend the heights against a fresh elite unit, not just garrison and wait.
+
+### Changed
+- Tactical hint at Austerlitz updated to warn about the Imperial Guard charge — bring infantry, form square AS SOON AS you take the heights.
+
 ## v1.10.0 — 2026-05-03
 
 Per-scenario unique mechanics — addressing the design-review point that scenarios played homogeneously.

@@ -16,6 +16,7 @@ const describe = (e: BattleEvent): string => {
     case 'morale-revealed':    return `${e.unitId} morale revealed: ${'★'.repeat(e.morale)}`;
     case 'unit-eliminated':    return `${e.unitId} eliminated`;
     case 'unit-retreated':     return `${e.unitId} retreated`;
+    case 'trigger-fired':      return e.flavour ?? `Event: ${e.triggerId}`;
     case 'victory':            return `Victory: ${e.side} (${e.reason})`;
   }
 };

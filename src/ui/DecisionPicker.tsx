@@ -12,11 +12,27 @@ export function DecisionPicker({ decision }: { decision: Decision }) {
 
   const choose = (i: number) => {
     useGame.setState(s => {
-      const newDecisions = [...s.state!.decisionsTaken, { decisionId: decision.id, optionIndex: i }];
-      const patched = applyPatch(scenario, decision.options[i].patch);
-      const fresh = beginBattle(patched, newDecisions);
-      fresh.scenarioIndex = s.state!.scenarioIndex;
-      fresh.outcomes = s.state!.outcomes;
+      const prev = s.state;
+      if (!prev) return {};
+      const opt = decision.options[i];
+      const newDecisions = [...prev.decisionsTaken, { decisionId: decision.id, optionIndex: i }];
+      // Accumulate the chosen option's downstream patches into pendingPatches.
+      // beginBattle of a future scenario will consume the entry for its id.
+      const newPending: typeof prev.pendingPatches = { ...prev.pendingPatches };
+      if (opt.downstreamPatches) {
+        for (const [scenarioId, patch] of Object.entries(opt.downstreamPatches)) {
+          newPending[scenarioId] = [...(newPending[scenarioId] ?? []), patch];
+        }
+      }
+      const patched = applyPatch(scenario, opt.patch);
+      const fresh = beginBattle(patched, newDecisions, newPending);
+      fresh.scenarioIndex = prev.scenarioIndex;
+      fresh.outcomes = prev.outcomes;
+      // beginBattle strips this scenario's pendingPatches entry; restore the
+      // accumulated map for future scenarios.
+      const carryForward: typeof newPending = { ...newPending };
+      delete carryForward[patched.id];
+      fresh.pendingPatches = carryForward;
       return { state: fresh, scenario: patched, history: [fresh] };
     });
     goto('battle');

@@ -87,5 +87,28 @@ export const austerlitz: Scenario = {
   ai: { generalRule: 'aggressive', triggers: [] },
   postBattleDispatch: '07-austerlitz-postbattle',
   tacticalHint:
-    'Bait and counterstroke. The Pratzen Heights (6,5) are everything — take them, and have someone standing there at turn 9 (after Coalition\'s turn 8) to win. The Coalition is aggressive: they\'ll advance on your line and try to retake the heights, so don\'t just race a cavalryman in; bring infantry to dig in. Soult and Davout do the heavy lifting; the Imperial Guard is your reserve. Alternative: grind Russian strength below 6 if you can\'t hold.',
+    'Bait and counterstroke. The Pratzen Heights (6,5) are everything — take them, and have someone standing there at turn 9 (after Coalition\'s turn 8) to win. WARNING: when you set foot on the heights, the Russian Imperial Guard cavalry charges from reserve. They\'re elite (★★★) and they hit hard. Bring infantry to form square on the heights AS SOON as you take them — line/column will be cut down. Alternative: grind Russian strength below 6 if you can\'t hold.',
+  scenarioTriggers: [
+    {
+      id: 'russian-guard-charge',
+      // Fires the moment a French unit stands on the Pratzen heights.
+      when: { kind: 'whenSideHasUnitOnTile', side: 'french', pos: { x: 6, y: 5 } },
+      patch: {
+        unitsAdded: [
+          {
+            id: 'ru-guard-cavalry',
+            name: 'Imperial Guard Cavalry',
+            side: 'russian',
+            type: 'heavy-cavalry',
+            position: { x: 8, y: 5 },     // arrives east of the heights
+            facing: 'W',
+            formation: 'line',
+            strength: 4,
+            morale: 3,                    // elite
+          },
+        ],
+      },
+      flavour: 'The Russian Imperial Guard cavalry charges from reserve!',
+    },
+  ],
 };

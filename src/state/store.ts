@@ -3,6 +3,7 @@ import type { GameState, Pos, Formation, Scenario } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
 import { runAiTurn, type AiDifficulty } from '../engine/ai';
 import { replayUpTo, eventUnitIds } from '../engine/replay';
+import { applyScenarioTriggers } from '../engine/triggers';
 import { localStorageBackend, newRunId } from './save';
 import { campaignScenarios } from '../scenarios';
 import {
@@ -39,6 +40,7 @@ const captionForEvent = (e: BattleEvent, units: { id: string; name?: string }[])
     case 'morale-revealed':   return `${unitName(e.unitId, units)}: ${moraleFlavour(e.morale)}`;
     case 'unit-eliminated':   return `${unitName(e.unitId, units)} eliminated`;
     case 'unit-retreated':    return `${unitName(e.unitId, units)} retreats`;
+    case 'trigger-fired':     return e.flavour ?? null;
     case 'turn-started':
     case 'turn-ended':
     case 'victory':
@@ -133,9 +135,10 @@ export const useGame = create<Store>((set, get) => ({
     try {
       const r = moveUnit(state, selectedUnitId, to,
         { tiles: scenario.tiles, grid: scenario.grid });
-      const v = checkVictory(r.state, scenario.victory);
+      const t = applyScenarioTriggers(r.state, scenario);
+      const v = checkVictory(t.state, scenario.victory);
       set({
-        state: r.state, history: [...history, r.state],
+        state: t.state, history: [...history, t.state],
         screen: v.kind === 'decided' ? 'battle-end' : 'battle',
       });
       if (v.kind === 'decided') playFifeFlourish();
@@ -149,9 +152,10 @@ export const useGame = create<Store>((set, get) => ({
     try {
       const r = attack(state, selectedUnitId, defenderId);
       for (const ev of r.events) playEventSound(ev);
-      const v = checkVictory(r.state, scenario.victory);
+      const t = applyScenarioTriggers(r.state, scenario);
+      const v = checkVictory(t.state, scenario.victory);
       set({
-        state: r.state, history: [...history, r.state],
+        state: t.state, history: [...history, t.state],
         selectedUnitId: null,
         screen: v.kind === 'decided' ? 'battle-end' : 'battle',
       });
@@ -165,9 +169,10 @@ export const useGame = create<Store>((set, get) => ({
     if (!state || !scenario || !selectedUnitId) return;
     try {
       const r = changeFormation(state, selectedUnitId, to);
-      const v = checkVictory(r.state, scenario.victory);
+      const t = applyScenarioTriggers(r.state, scenario);
+      const v = checkVictory(t.state, scenario.victory);
       set({
-        state: r.state, history: [...history, r.state],
+        state: t.state, history: [...history, t.state],
         screen: v.kind === 'decided' ? 'battle-end' : 'battle',
       });
       if (v.kind === 'decided') playFifeFlourish();
@@ -180,9 +185,10 @@ export const useGame = create<Store>((set, get) => ({
     if (!state || !scenario) return;
     playTurnDrum();
     const r = endTurn(state);
-    const v = checkVictory(r.state, scenario.victory);
+    const t = applyScenarioTriggers(r.state, scenario);
+    const v = checkVictory(t.state, scenario.victory);
     set({
-      state: r.state, history: [r.state],
+      state: t.state, history: [t.state],
       selectedUnitId: null, hoveredEnemyId: null,
       screen: v.kind === 'decided' ? 'battle-end' : 'battle',
     });
@@ -319,9 +325,12 @@ export const useGame = create<Store>((set, get) => ({
       get().saveCurrent();
       return;
     }
-    const nextState = beginBattle(next);
+    // Forward decisionsTaken AND pendingPatches into the next scenario so
+    // earlier choices' downstream effects materialise.
+    const nextState = beginBattle(next, state.decisionsTaken, state.pendingPatches);
     nextState.scenarioIndex = idx + 1;
     nextState.outcomes = allOutcomes;
+    nextState.decisionsTaken = state.decisionsTaken;
     set({ state: nextState, scenario: next, history: [nextState], screen: 'dispatch' });
     get().saveCurrent();
   },

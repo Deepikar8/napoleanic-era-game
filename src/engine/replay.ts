@@ -3,6 +3,7 @@ import type {
 } from './types';
 import { beginBattle } from './turn';
 import { COALITION } from './sides';
+import { applyPatchToState } from './triggers';
 
 const facingFromMove = (from: Pos, to: Pos, fallback: Unit['facing']): Unit['facing'] => {
   if (to.x > from.x) return 'E';
@@ -65,6 +66,10 @@ function applyEvent(state: GameState, e: BattleEvent): GameState {
         ...state,
         units: state.units.map(u => u.id === e.unitId ? { ...u, position: e.to } : u),
       };
+    case 'trigger-fired': {
+      const patched = applyPatchToState(state, e.patch);
+      return { ...patched, triggersFired: [...state.triggersFired, e.triggerId] };
+    }
     case 'victory':
       return state;
   }
@@ -99,6 +104,8 @@ export function eventUnitIds(e: BattleEvent): string[] {
       return [e.unitId];
     case 'attack-resolved':
       return [e.attackerId, e.defenderId];
+    case 'trigger-fired':
+      return e.patch.unitsAdded?.map(u => u.id) ?? [];
     default:
       return [];
   }

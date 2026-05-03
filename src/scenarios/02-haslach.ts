@@ -14,7 +14,7 @@ const u = (
 const decision: Decision = {
   id: 'haslach-pre',
   promptMd:
-    'Werneck has cut off Dupont\'s 6,000 men with three times their number. Dupont, vastly outnumbered, intends to attack rather than be enveloped.\n\n**Reinforce by sending a battalion of light infantry forward at the cost of leaving the rearguard thinner — or hold them back?**',
+    'Werneck has cut off Dupont\'s 6,000 men with three times their number. Dupont, vastly outnumbered, intends to attack rather than be enveloped.\n\n**Reinforce by sending a battalion of light infantry forward at the cost of leaving the rearguard thinner — or hold them back?**\n\n*Note: troops sent forward here will not be available later. Troops kept in reserve will rejoin Mortier\'s column at Krems.*',
   options: [
     {
       label: 'Send the light infantry forward',
@@ -23,12 +23,29 @@ const decision: Decision = {
           side: 'french', type: 'light-infantry', position: { x: 1, y: 4 },
           facing: 'E', formation: 'line', strength: 3, morale: 2 },
       ] },
+      // Downstream: Mortier's column at Krems is thinner. fr-1 (Light Bn) starts
+      // at strength 3 and morale 1 (the troops are tired and battered).
+      downstreamPatches: {
+        krems: {
+          unitOverrides: [
+            { id: 'fr-fr-1', strength: 3, morale: 1 },
+          ],
+        },
+      },
     },
     {
       label: 'Hold the rearguard intact',
       patch: { unitOverrides: [
         { id: 'fr-dupont', morale: 3 },   // tougher Dupont
       ] },
+      // Downstream: Mortier gets the fresh Light Bn fully rested.
+      downstreamPatches: {
+        krems: {
+          unitOverrides: [
+            { id: 'fr-fr-1', morale: 3 },  // veteran light infantry, ready
+          ],
+        },
+      },
     },
   ],
 };
