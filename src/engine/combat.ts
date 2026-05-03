@@ -71,7 +71,7 @@ export function resolveAttack(
   if (gap <= -2)      { result = 'attacker-broken';   attackerLoss = 2; }
   else if (gap === -1) { result = 'attacker-repulsed'; attackerLoss = 1; }
   else if (gap <= 1)  { result = 'exchange';          attackerLoss = 1; defenderLoss = 1; }
-  else if (gap === 2) { result = 'defender-retreats'; defenderLoss = 0; }
+  else if (gap === 2) { result = 'defender-retreats'; attackerLoss = 0; defenderLoss = 0; }
   else                { result = 'defender-broken';   defenderLoss = 2; }
 
   events.push({
@@ -93,7 +93,7 @@ export function resolveAttack(
       return u;
     })
     .filter(u => {
-      if ((u.strength as number) === 0) {
+      if ((u.strength as number) === 0) { // 0 is valid post-loss; not in Strength union
         eliminatedIds.add(u.id);
         return false;
       }
