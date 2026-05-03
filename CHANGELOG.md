@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.13.0 — 2026-05-03
+
+Combat feedback animations — moving the *drama* of combat onto the board, per the design review's "communicating drama" point.
+
+### Added
+- **Damage flash on hit cells.** When a unit's strength drops, the cell flashes a translucent red for 700ms (ease-out fade).
+- **Floating loss marker.** A bold "−1" or "−2" rises from the unit and fades over ~1.1s. Stroke-painted for legibility against any background.
+- **Elimination animation.** When a unit is removed from the board, a dark cell with an "✕" briefly inflates and fades at the unit's last-known position. Pure UI — no engine change; computed by diffing units between renders.
+- **Morale-reveal star burst.** When an enemy's morale flips from hidden to revealed, the matching star count (★/★★/★★★) floats up above the unit in gold for 1.3s. Same hidden→revealed beat the engine already produced; just visible now.
+
+### Implementation
+- BattleBoard tracks the previous frame's units in a `useRef` and diffs on each render — strength loss, eliminations, morale flips. New `effects` state holds active overlays; auto-pruned 1500ms after creation.
+- New CSS keyframes in `index.css` for `damage-flash`, `float-up`, `eliminate`, `morale-reveal` — each one-shot, all SVG-friendly (`transform-box: fill-box` for stable origins).
+
 ## v1.12.0 — 2026-05-03
 
 UI/visual pass — moving information from side panels onto the board.

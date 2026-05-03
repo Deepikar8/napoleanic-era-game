@@ -30,3 +30,52 @@ html { font-size: 16px; }
   animation: objective-pulse 1800ms ease-in-out infinite;
   transform-origin: center;
 }
+
+/* Combat feedback animations.
+   Each is one-shot. SVG elements use 'animation' attr via class. */
+
+/* Damage flash on the cell — red overlay fades from solid to nothing. */
+@keyframes damage-flash {
+  0%   { opacity: 0.7; }
+  60%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+.animate-damage-flash {
+  animation: damage-flash 700ms ease-out forwards;
+}
+
+/* Loss marker — "−1" floats up and fades. */
+@keyframes float-up {
+  0%   { transform: translateY(0);     opacity: 0; }
+  10%  { transform: translateY(-2px);  opacity: 1; }
+  100% { transform: translateY(-22px); opacity: 0; }
+}
+.animate-float-up {
+  animation: float-up 1100ms ease-out forwards;
+  transform-origin: center;
+}
+
+/* Elimination — quick scale-up + fade out. */
+@keyframes eliminate {
+  0%   { transform: scale(1);    opacity: 0.9; }
+  40%  { transform: scale(1.15); opacity: 0.85; }
+  100% { transform: scale(1.3);  opacity: 0; }
+}
+.animate-eliminate {
+  animation: eliminate 900ms cubic-bezier(.4,.1,.6,1) forwards;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Morale reveal — stars float up briefly. */
+@keyframes morale-reveal {
+  0%   { transform: translateY(6px) scale(0.6); opacity: 0; }
+  20%  { transform: translateY(0)   scale(1.2); opacity: 1; }
+  80%  { transform: translateY(-6px) scale(1);   opacity: 1; }
+  100% { transform: translateY(-12px) scale(1);  opacity: 0; }
+}
+.animate-morale-reveal {
+  animation: morale-reveal 1300ms ease-out forwards;
+  transform-origin: center;
+  transform-box: fill-box;
+}

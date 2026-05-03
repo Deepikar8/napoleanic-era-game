@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GameState, Pos, Scenario, TerrainKind, Unit, VictoryCondition } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
@@ -88,6 +88,14 @@ export interface BattleBoardProps {
   onHoverEnemy: (id: string | null) => void;
 }
 
+interface CombatEffect {
+  id: number;
+  kind: 'damage' | 'eliminated' | 'morale-reveal';
+  pos: Pos;
+  /** Damage: loss amount. Morale-reveal: morale 1-3. */
+  detail?: number;
+}
+
 export function BattleBoard(p: BattleBoardProps) {
   const { scenario, state, selectedUnitId, hoveredEnemyId } = p;
   const cellSize = 48;
@@ -95,6 +103,57 @@ export function BattleBoard(p: BattleBoardProps) {
   const h = scenario.grid.height * cellSize;
 
   const [tooltipPos, setTooltipPos] = useState<Pos | null>(null);
+
+  // Combat-feedback effects: diff state.units vs previous frame, render
+  // ephemeral overlays for damage / elimination / morale-reveal.
+  const prevUnitsRef = useRef(state.units);
+  const fxIdRef = useRef(0);
+  const [effects, setEffects] = useState<CombatEffect[]>([]);
+
+  useEffect(() => {
+    const prev = prevUnitsRef.current;
+    if (prev === state.units) return;
+    const newFx: CombatEffect[] = [];
+
+    for (const u of state.units) {
+      const prevU = prev.find(p => p.id === u.id);
+      if (!prevU) continue;
+      // Strength loss → damage flash + loss marker
+      if (prevU.strength > u.strength) {
+        newFx.push({
+          id: ++fxIdRef.current,
+          kind: 'damage', pos: u.position,
+          detail: prevU.strength - u.strength,
+        });
+      }
+      // Morale newly revealed
+      if (!prevU.moraleRevealed && u.moraleRevealed) {
+        newFx.push({
+          id: ++fxIdRef.current,
+          kind: 'morale-reveal', pos: u.position, detail: u.morale,
+        });
+      }
+    }
+    // Eliminated → render at last-known position
+    for (const prevU of prev) {
+      if (!state.units.find(u => u.id === prevU.id)) {
+        newFx.push({
+          id: ++fxIdRef.current,
+          kind: 'eliminated', pos: prevU.position,
+        });
+      }
+    }
+
+    if (newFx.length > 0) {
+      setEffects(cur => [...cur, ...newFx]);
+      // Auto-prune after the longest animation duration finishes.
+      const ids = new Set(newFx.map(f => f.id));
+      setTimeout(() => {
+        setEffects(cur => cur.filter(f => !ids.has(f.id)));
+      }, 1500);
+    }
+    prevUnitsRef.current = state.units;
+  }, [state.units]);
 
   const selected = selectedUnitId
     ? state.units.find(u => u.id === selectedUnitId) ?? null
@@ -266,6 +325,71 @@ export function BattleBoard(p: BattleBoardProps) {
                 />
               </>
             )}
+          </g>
+        );
+      })}
+
+      {/* Combat feedback overlays — damage flash, loss markers, eliminations, morale reveals */}
+      {effects.map(fx => {
+        const cx = fx.pos.x * cellSize;
+        const cy = fx.pos.y * cellSize;
+        const centerX = cx + cellSize / 2;
+        const centerY = cy + cellSize / 2;
+        if (fx.kind === 'damage') {
+          return (
+            <g key={fx.id} pointerEvents="none">
+              {/* Red flash on the cell */}
+              <rect
+                x={cx + 2} y={cy + 2}
+                width={cellSize - 4} height={cellSize - 4}
+                rx={3}
+                fill="#c03020" opacity={0.55}
+                className="animate-damage-flash"
+              />
+              {/* Floating loss marker */}
+              <text
+                x={centerX} y={cy + 18}
+                textAnchor="middle"
+                fontSize="14" fontWeight="900"
+                fill="#a01010" stroke="#fff" strokeWidth={1.2} paintOrder="stroke"
+                className="animate-float-up"
+              >
+                −{fx.detail}
+              </text>
+            </g>
+          );
+        }
+        if (fx.kind === 'eliminated') {
+          return (
+            <g key={fx.id} pointerEvents="none" className="animate-eliminate">
+              <rect
+                x={cx + 4} y={cy + 4}
+                width={cellSize - 8} height={cellSize - 8}
+                rx={3}
+                fill="#1a120a" opacity={0.9}
+                stroke="#a01010" strokeWidth={2}
+              />
+              <text
+                x={centerX} y={centerY + 5}
+                textAnchor="middle"
+                fontSize="20" fontWeight="900" fill="#a01010"
+              >
+                ✕
+              </text>
+            </g>
+          );
+        }
+        // morale-reveal
+        return (
+          <g key={fx.id} pointerEvents="none" className="animate-morale-reveal">
+            <text
+              x={centerX} y={cy - 4}
+              textAnchor="middle"
+              fontSize="14" fontWeight="900"
+              fill="#d4a017" stroke="#1a120a" strokeWidth={1.2} paintOrder="stroke"
+            >
+              {'★'.repeat(fx.detail ?? 1)}
+            </text>
           </g>
         );
       })}
