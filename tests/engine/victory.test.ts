@@ -22,9 +22,17 @@ describe('victory', () => {
     const conds: VictoryCondition[] = [{
       for: 'french', kind: 'eliminate-unit', args: { unitId: 'mack' },
     }];
-    expect(checkVictory(baseState({ units: [u({ id: 'a', side: 'french' })] }), conds))
+    // Both sides present — mack already gone, eliminate condition fires.
+    expect(checkVictory(baseState({ units: [
+      u({ id: 'a', side: 'french' }),
+      u({ id: 'other-au', side: 'austrian' }),  // keeps Coalition alive so auto-elim doesn't fire instead
+    ] }), conds))
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
-    expect(checkVictory(baseState({ units: [u({ id: 'mack', side: 'austrian' })] }), conds))
+    // Both sides present, mack still alive — in-progress.
+    expect(checkVictory(baseState({ units: [
+      u({ id: 'mack', side: 'austrian' }),
+      u({ id: 'fr1',  side: 'french' }),
+    ] }), conds))
       .toEqual({ kind: 'in-progress' });
   });
 
@@ -33,9 +41,15 @@ describe('victory', () => {
       for: 'french', kind: 'reduce-side-strength',
       args: { side: 'austrian', threshold: 3 },
     }];
-    const stillAlive = baseState({ units: [u({ id: 'au1', side: 'austrian', strength: 4 })] });
+    const stillAlive = baseState({ units: [
+      u({ id: 'au1', side: 'austrian', strength: 4 }),
+      u({ id: 'fr1', side: 'french' }),
+    ] });
     expect(checkVictory(stillAlive, conds)).toEqual({ kind: 'in-progress' });
-    const reduced = baseState({ units: [u({ id: 'au1', side: 'austrian', strength: 2 })] });
+    const reduced = baseState({ units: [
+      u({ id: 'au1', side: 'austrian', strength: 2 }),
+      u({ id: 'fr1', side: 'french' }),
+    ] });
     expect(checkVictory(reduced, conds))
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
   });
@@ -56,11 +70,66 @@ describe('victory', () => {
     const conds: VictoryCondition[] = [{
       for: 'french', kind: 'capture-tile', args: { pos: { x: 4, y: 4 } },
     }];
-    const empty = baseState({ units: [u({ id: 'fr1', side: 'french', position: { x: 0, y: 0 } })] });
+    const empty = baseState({ units: [
+      u({ id: 'fr1', side: 'french', position: { x: 0, y: 0 } }),
+      u({ id: 'au1', side: 'austrian', position: { x: 9, y: 9 } }),
+    ] });
     expect(checkVictory(empty, conds)).toEqual({ kind: 'in-progress' });
-    const onIt = baseState({ units: [u({ id: 'fr1', side: 'french', position: { x: 4, y: 4 } })] });
+    const onIt = baseState({ units: [
+      u({ id: 'fr1', side: 'french', position: { x: 4, y: 4 } }),
+      u({ id: 'au1', side: 'austrian', position: { x: 9, y: 9 } }),
+    ] });
     expect(checkVictory(onIt, conds))
       .toEqual({ kind: 'decided', victor: 'french', reason: expect.any(String) });
+  });
+
+  it('auto-victory: French wins when no Coalition units remain (no specific condition needed)', () => {
+    // Reproduces the playtest report: "Haslach turn 6, all Austrians dead,
+    // game did not end". With only the explicit conditions, neither side
+    // could win — French haven't reached turn 8, Austrians can't kill Dupont
+    // because they're dead.
+    const conds: VictoryCondition[] = [
+      { for: 'french', kind: 'survive-turns', args: { turns: 8 } },
+      { for: 'austrian', kind: 'eliminate-unit', args: { unitId: 'fr-dupont' } },
+    ];
+    const allAustriansDead = baseState({
+      turn: 6,
+      units: [
+        u({ id: 'fr-dupont', side: 'french' }),
+        u({ id: 'fr-1',      side: 'french' }),
+      ],
+    });
+    expect(checkVictory(allAustriansDead, conds))
+      .toEqual({ kind: 'decided', victor: 'french', reason: 'Coalition army destroyed' });
+  });
+
+  it('auto-victory: Coalition wins when no French units remain', () => {
+    const conds: VictoryCondition[] = [
+      { for: 'french', kind: 'survive-turns', args: { turns: 8 } },
+    ];
+    const noFrench = baseState({
+      turn: 4,
+      units: [u({ id: 'au1', side: 'austrian' })],
+    });
+    expect(checkVictory(noFrench, conds))
+      .toEqual({ kind: 'decided', victor: 'austrian', reason: 'French army destroyed' });
+  });
+
+  it('auto-victory: explicit conditions still take priority for the recorded reason', () => {
+    // If the explicit eliminate-Dupont fires AND auto-elim would fire, the
+    // explicit one wins (its reason text is more meaningful).
+    const conds: VictoryCondition[] = [
+      { for: 'austrian', kind: 'eliminate-unit', args: { unitId: 'fr-dupont' } },
+    ];
+    const noFrench = baseState({
+      units: [u({ id: 'au1', side: 'austrian' })],
+    });
+    const v = checkVictory(noFrench, conds);
+    expect(v.kind).toBe('decided');
+    if (v.kind === 'decided') {
+      expect(v.victor).toBe('austrian');
+      expect(v.reason).toContain('eliminated fr-dupont');  // not 'French army destroyed'
+    }
   });
 
   it('all-of requires every sub-condition before firing', () => {
@@ -74,14 +143,15 @@ describe('victory', () => {
         ],
       },
     }];
+    const austrianHolding = u({ id: 'au1', side: 'austrian', position: { x: 9, y: 9 } });
 
     const noneOnRoads = baseState({
-      units: [u({ id: 'fr1', side: 'french', position: { x: 0, y: 0 } })],
+      units: [u({ id: 'fr1', side: 'french', position: { x: 0, y: 0 } }), austrianHolding],
     });
     expect(checkVictory(noneOnRoads, conds)).toEqual({ kind: 'in-progress' });
 
     const onlyOne = baseState({
-      units: [u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } })],
+      units: [u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } }), austrianHolding],
     });
     expect(checkVictory(onlyOne, conds)).toEqual({ kind: 'in-progress' });
 
@@ -89,6 +159,7 @@ describe('victory', () => {
       units: [
         u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 } }),
         u({ id: 'fr2', side: 'french', position: { x: 2, y: 2 } }),
+        austrianHolding,
       ],
     });
     expect(checkVictory(bothCovered, conds))

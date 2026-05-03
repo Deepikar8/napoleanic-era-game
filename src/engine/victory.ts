@@ -1,5 +1,6 @@
 import type { GameState, VictoryCondition, VictoryStatus, Side, Pos } from './types';
 import { posEq } from './types';
+import { COALITION } from './sides';
 
 const totalStrength = (state: GameState, side: Side) =>
   state.units.filter(u => u.side === side).reduce((s, u) => s + u.strength, 0);
@@ -55,9 +56,27 @@ const condMet = (state: GameState, c: VictoryCondition): { met: boolean; reason:
 };
 
 export function checkVictory(state: GameState, conds: VictoryCondition[]): VictoryStatus {
+  // Explicit scenario conditions take priority — a named goal like
+  // 'eliminate Dupont' or 'capture the heights' should be the recorded reason.
   for (const c of conds) {
     const { met, reason } = condMet(state, c);
     if (met) return { kind: 'decided', victor: c.for, reason };
+  }
+  // Fallback: total elimination of one team. Without this, the game would
+  // sit forever after the kid wipes out the entire opposing side mid-battle —
+  // because no specific condition (eliminate-X, capture-Y, survive-N) had
+  // fired yet.
+  const frenchUnits = state.units.filter(u => u.side === 'french');
+  const coalitionUnits = state.units.filter(u => (COALITION as readonly Side[]).includes(u.side));
+  if (frenchUnits.length === 0 && coalitionUnits.length > 0) {
+    return {
+      kind: 'decided',
+      victor: coalitionUnits[0].side,
+      reason: 'French army destroyed',
+    };
+  }
+  if (coalitionUnits.length === 0 && frenchUnits.length > 0) {
+    return { kind: 'decided', victor: 'french', reason: 'Coalition army destroyed' };
   }
   return { kind: 'in-progress' };
 }

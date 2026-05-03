@@ -63,7 +63,7 @@ export function Splash() {
             <span>Mute (no drum or fife sounds)</span>
           </label>
         </div>
-        <p className="mt-10 text-xs opacity-50">v1.13.0</p>
+        <p className="mt-10 text-xs opacity-50">v1.13.1</p>
       </div>
     </main>
   );

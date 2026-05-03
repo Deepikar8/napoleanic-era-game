@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.13.1 — 2026-05-03
+
+Reported by playtester: "at Haslach round 6, all the army is killed but the game did not end".
+
+### Fixed
+- **Total side elimination now wins.** The engine had no rule for "your opponent has been wiped out, so you win." Victory only fired on specific conditions (eliminate-X, capture-Y, survive-N, etc.). At Haslach the kid wiped the Austrians at turn 6, but Austrians can't kill Dupont (they're dead) and French haven't reached turn 8 yet — so the game just sat. Added a fallback: if one team has zero units and the other team has at least one, the surviving team wins immediately ("Coalition army destroyed" / "French army destroyed"). Explicit scenario conditions still take priority for the recorded reason. Three new tests cover the fix and explicit-condition priority.
+
 ## v1.13.0 — 2026-05-03
 
 Combat feedback animations — moving the *drama* of combat onto the board, per the design review's "communicating drama" point.
