@@ -82,6 +82,31 @@ describe('scenario triggers', () => {
     expect(r.events).toHaveLength(1);              // fires at turn 3
   });
 
+  it('triggers fire after AI turns too — runAiTurn applies them at the end', async () => {
+    // A whenTurn trigger that should fire when the AI's endTurn pushes turn
+    // forward. Without the fix this fires only after the next player action.
+    const { runAiTurn } = await import('../../src/engine/ai');
+    const trig: ScenarioTrigger = {
+      id: 'turn-2-event',
+      when: { kind: 'whenTurn', turn: 2 },
+      patch: {
+        unitsAdded: [u({ id: 'reinforce', side: 'french', position: { x: 1, y: 1 } })],
+      },
+    };
+    const scn: Scenario = {
+      ...baseScenario,
+      ai: { generalRule: 'aggressive', triggers: [] },
+      scenarioTriggers: [trig],
+    };
+    let state = beginBattle(scn);
+    state = { ...state, currentSide: 'austrian' };
+    // The AI ends its turn — turn flips to 2 (french). The trigger should
+    // fire INSIDE runAiTurn now, not wait for the next player action.
+    const r = runAiTurn(state, scn, 'normal');
+    expect(r.state.units.find(u => u.id === 'reinforce')).toBeTruthy();
+    expect(r.events.some(e => e.kind === 'trigger-fired' && e.triggerId === 'turn-2-event')).toBe(true);
+  });
+
   it('whenSideStrengthBelow fires when total drops past threshold', () => {
     const trig: ScenarioTrigger = {
       id: 's',

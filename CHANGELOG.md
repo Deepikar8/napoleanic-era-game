@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.14.1 — 2026-05-03
+
+External code review pass.
+
+### Fixed
+- **Scenario triggers now run after AI turns too.** Previously `applyScenarioTriggers` was called only after player actions and after the player's `endTurn`. The AI block in `doEndTurn` set `state: ai.state` directly, so any trigger condition that became true during the AI's turn (`whenTurn` flipping past the threshold, AI moving onto a tile, AI strength dropping below a threshold) would only fire on the next player action. Today's only trigger is French-position-based so it's safe, but future AI-side triggers would have fired late. Fixed by calling `applyScenarioTriggers` at the end of `runAiTurn` itself, after `endTurn`. New test: a `whenTurn: 2` trigger now fires inside the AI's turn rather than waiting for the player to act.
+- **Save validation strict on `pendingPatches` value shape.** Was: only checked the outer object. A hand-edited save with `pendingPatches: { krems: 123 }` passed validation, then crashed when `beginBattle('krems', ...)` tried to `for...of` the value. Now each value must be an array, and each entry must be an object. Same tightening for `triggersFired` (must be `string[]`). 2 new tests cover the malformed cases.
+
 ## v1.14.0 — 2026-05-03
 
 Closes the design review's last open item (#5 — terrain readability).

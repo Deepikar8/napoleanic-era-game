@@ -61,8 +61,19 @@ export function isValidGameState(v: unknown): v is GameState {
   if (v.selectedUnitId !== null && typeof v.selectedUnitId !== 'string') return false;
   if (v.pendingDecisionId !== null && typeof v.pendingDecisionId !== 'string') return false;
   // pendingPatches / triggersFired added in v1.11.0; missing in older saves is OK.
-  if (v.pendingPatches !== undefined && !isObject(v.pendingPatches)) return false;
-  if (v.triggersFired !== undefined && !Array.isArray(v.triggersFired)) return false;
+  // Each pendingPatches[scenarioId] MUST be an array of ScenarioPatch-shaped
+  // objects — turn.ts iterates them with `for ... of` and crashes on a non-array.
+  if (v.pendingPatches !== undefined) {
+    if (!isObject(v.pendingPatches)) return false;
+    for (const val of Object.values(v.pendingPatches)) {
+      if (!Array.isArray(val)) return false;
+      if (!val.every(p => isObject(p))) return false;
+    }
+  }
+  if (v.triggersFired !== undefined) {
+    if (!Array.isArray(v.triggersFired)) return false;
+    if (!v.triggersFired.every(t => typeof t === 'string')) return false;
+  }
   return true;
 }
 

@@ -4,6 +4,7 @@ import { legalMoves } from './movement';
 import { moveUnit, attack, changeFormation, endTurn } from './turn';
 import { previewAttack } from './preview';
 import { sameTeam, isOnActiveSide } from './sides';
+import { applyScenarioTriggers } from './triggers';
 
 export type AiDifficulty = 'easy' | 'normal' | 'hard';
 
@@ -144,5 +145,13 @@ export function runAiTurn(
 
   const r = endTurn(s);
   s = r.state; events.push(...r.events);
+
+  // Triggers must fire for AI-side conditions (whenTurn, whenSideStrengthBelow,
+  // whenSideHasUnitOnTile for AI side). Otherwise they'd silently wait for the
+  // next player action. Applied AFTER endTurn so turn-counter-based conditions
+  // see the new turn number.
+  const t = applyScenarioTriggers(s, scenario);
+  s = t.state; events.push(...t.events);
+
   return { state: s, events };
 }

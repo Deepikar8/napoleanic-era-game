@@ -70,6 +70,26 @@ describe('save backend', () => {
     expect(isValidSavedRun({ runId: 'ok', savedAt: 100, state: null })).toBe(false);
   });
 
+  it('rejects pendingPatches with non-array values (would crash beginBattle iteration)', () => {
+    const valid = sampleState();
+    // Hand-edited save: pendingPatches.krems is a number, not an array.
+    expect(isValidGameState({ ...valid, pendingPatches: { krems: 123 } })).toBe(false);
+    // Array of non-objects also rejected.
+    expect(isValidGameState({ ...valid, pendingPatches: { krems: ['nope'] } })).toBe(false);
+    // Valid shape passes.
+    expect(isValidGameState({
+      ...valid,
+      pendingPatches: { krems: [{ unitOverrides: [{ id: 'fr1', morale: 1 }] }] },
+    })).toBe(true);
+  });
+
+  it('rejects triggersFired containing non-strings', () => {
+    const valid = sampleState();
+    expect(isValidGameState({ ...valid, triggersFired: ['ok', 42] })).toBe(false);
+    expect(isValidGameState({ ...valid, triggersFired: 'not-an-array' })).toBe(false);
+    expect(isValidGameState({ ...valid, triggersFired: ['ok', 'also-ok'] })).toBe(true);
+  });
+
   it('preserves a real played-out state through save and load', () => {
     // Build a non-trivial Wertingen state: a move and a turn-end.
     const ctx = { tiles: wertingen.tiles, grid: wertingen.grid };
