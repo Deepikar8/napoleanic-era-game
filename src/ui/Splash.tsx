@@ -1,0 +1,37 @@
+import { useEffect, useState } from 'react';
+import { useGame } from '../state/store';
+import { localStorageBackend, type SavedRun } from '../state/save';
+import { Button } from './shared';
+import { austerlitz } from '../scenarios/07-austerlitz';
+import { campaignScenarios, getScenarioById } from '../scenarios';
+
+export function Splash() {
+  const { startNewRun, loadRun, goto } = useGame();
+  const [runs, setRuns] = useState<SavedRun[]>([]);
+
+  useEffect(() => { setRuns(localStorageBackend.list()); }, []);
+
+  const onContinue = () => {
+    const last = runs[0];
+    if (!last) return;
+    const scenario = getScenarioById(last.state.scenarioId) ?? campaignScenarios[0];
+    loadRun(last.runId, scenario);
+  };
+
+  return (
+    <main className="min-h-full flex items-center justify-center bg-parchment text-ink">
+      <div className="max-w-xl w-full text-center px-6">
+        <h1 className="font-serif text-5xl mb-1">1805</h1>
+        <p className="font-serif text-xl italic mb-8 opacity-80">A Napoleonic Campaign</p>
+        <div className="space-y-3">
+          <div><Button onClick={() => startNewRun(austerlitz)}>New Campaign</Button></div>
+          {runs.length > 0 && (
+            <div><Button onClick={onContinue} kind="secondary">Continue ({runs[0].state.scenarioId}, turn {runs[0].state.turn})</Button></div>
+          )}
+          <div><Button onClick={() => goto('campaign-menu')} kind="secondary">Campaign Menu</Button></div>
+        </div>
+        <p className="mt-10 text-xs opacity-50">v0.2 · Phase 2</p>
+      </div>
+    </main>
+  );
+}
