@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.15.0 — 2026-05-04
+
+Accessibility pass.
+
+### Added
+- **Keyboard board navigation.** The battle board's `<svg>` is now `tabIndex={0}` with `role="grid"` and an `aria-label` describing how to use it. When focused (Tab key from anywhere; visible gold ring via `focus-visible`), the player can move a dashed-gold **cursor** with the arrow keys and activate the cursor's tile with <kbd>Enter</kbd> or <kbd>Space</kbd>. Activation runs the same code path as clicking that cell — selects a unit, moves to a legal tile, or initiates a tap-tap attack. Cursor starts at the first own-side unit. Help overlay updated with the Arrow / Enter description.
+- **`prefers-reduced-motion` support.** All animations (banner flourish, objective pulse, damage flash, loss-marker float-up, eliminate, morale-reveal) now collapse to their end state instantly when the OS / browser sets reduced-motion. Looping animations stop entirely. Behaviour preserved; motion removed for users who get sick on it or use assistive tech.
+- **Trigger-fired replay test.** New regression test in `replay.test.ts` constructs a small scenario whose trigger spawns a Russian Guard unit when a French unit reaches a tile, then verifies that `replayUpTo` reconstructs the spawned unit at the right position with the right morale, and adds the trigger id to `triggersFired`. Earlier replay tests covered move/attack but not trigger handling.
+
+### Deferred
+- Deeper validation of `ScenarioPatch` contents in saves (currently only shallow object check). Acceptable for a local game; can tighten if save persistence across many versions becomes a real concern.
+- Manual contrast check with a real tool (review note).
+- Real-iPad / phone smoke test for Austerlitz density (review note — needs hardware).
+
 ## v1.14.7 — 2026-05-04
 
 External code review pass.

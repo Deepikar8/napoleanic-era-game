@@ -165,6 +165,14 @@ export function BattleBoard(p: BattleBoardProps) {
 
   const canAct = (side: Unit['side']) => isOnActiveSide(side, state.currentSide);
 
+  // Keyboard navigation. Default cursor at the first own-side unit;
+  // arrow keys move it; Enter/Space activates whatever is on the tile.
+  const firstOwnUnit = state.units.find(u => canAct(u.side));
+  const [cursor, setCursor] = useState<Pos>(
+    firstOwnUnit ? firstOwnUnit.position : { x: 0, y: 0 },
+  );
+  const [svgFocused, setSvgFocused] = useState(false);
+
   const moves = selected && canAct(selected.side) && !selected.hasMoved
     ? legalMoves(selected, state.units, scenario)
     : [];
@@ -182,9 +190,53 @@ export function BattleBoard(p: BattleBoardProps) {
 
   const objectives = frenchObjectiveTiles(state, scenario.victory);
 
+  // Keyboard handler: arrows move cursor; Enter/Space activate.
+  // Activation = whatever a click on that cell would do (move, attack, select).
+  const onKey = (e: React.KeyboardEvent) => {
+    const k = e.key;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)) {
+      e.preventDefault();
+      e.stopPropagation();
+      setCursor(prev => {
+        let { x, y } = prev;
+        if (k === 'ArrowUp')    y = Math.max(0, y - 1);
+        if (k === 'ArrowDown')  y = Math.min(scenario.grid.height - 1, y + 1);
+        if (k === 'ArrowLeft')  x = Math.max(0, x - 1);
+        if (k === 'ArrowRight') x = Math.min(scenario.grid.width  - 1, x + 1);
+        return { x, y };
+      });
+      return;
+    }
+    if (k === 'Enter' || k === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Replicate click semantics for the cursor cell.
+      const onTile = state.units.find(u => posEq(u.position, cursor));
+      const isMove = moveSet.has(posKey(cursor));
+      if (onTile) {
+        const isAttackable = enemySet.has(onTile.id);
+        if (!isAttackable) { p.onSelectUnit(onTile.id); return; }
+        if (hoveredEnemyId === onTile.id) p.onAttack(onTile.id);
+        else p.onHoverEnemy(onTile.id);
+      } else {
+        if (selected && isMove) { p.onMoveTo(cursor); }
+        else if (selected) { p.onSelectUnit(null); }
+      }
+    }
+  };
+
   return (
     <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto bg-parchmentDark border border-ink/40">
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full h-auto bg-parchmentDark border border-ink/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-gilt"
+      tabIndex={0}
+      role="grid"
+      aria-label={`Battle board, ${scenario.grid.width} by ${scenario.grid.height}. Use arrow keys to move the cursor, Enter to act.`}
+      onKeyDown={onKey}
+      onFocus={() => setSvgFocused(true)}
+      onBlur={() => setSvgFocused(false)}
+    >
       <defs>
         {/* Terrain patterns. Each renders the base colour plus a small motif
             that tiles every 8–12 user-units. 'plain' has no pattern — kept as
@@ -255,6 +307,23 @@ export function BattleBoard(p: BattleBoardProps) {
             />
           );
         })
+      )}
+
+      {/* Keyboard focus cursor — rendered between tiles and objectives so it
+          sits below the unit silhouette but above the terrain. Only visible
+          when the SVG actually has keyboard focus. */}
+      {svgFocused && (
+        <rect
+          x={cursor.x * cellSize + 1}
+          y={cursor.y * cellSize + 1}
+          width={cellSize - 2}
+          height={cellSize - 2}
+          fill="none"
+          stroke="#d4a017"
+          strokeWidth={2}
+          strokeDasharray="3 2"
+          pointerEvents="none"
+        />
       )}
 
       {/* French objective markers — drawn between tiles and units so units sit on top */}

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { wertingen } from '../../src/scenarios/01-wertingen';
 import { beginBattle, moveUnit, endTurn, attack } from '../../src/engine';
 import { replayUpTo } from '../../src/engine/replay';
+import { applyScenarioTriggers } from '../../src/engine/triggers';
 import type { Scenario } from '../../src/engine/types';
 
 describe('replay rebuild', () => {
@@ -106,6 +107,66 @@ describe('replay rebuild', () => {
     // With allScenarios — patch re-derived, replayed morale matches live (1).
     const withCtx = replayUpTo(krems, decisions, initial.log, 0, allScenarios);
     expect(withCtx.units.find(u => u.id === 'fr-mortier')!.morale).toBe(1);
+  });
+
+  it('reconstructs a trigger-fired event (added unit reappears at correct position)', () => {
+    // Tiny scenario whose trigger spawns a Russian Guard unit when a French
+    // unit reaches (3, 3). After running it live, replayUpTo should show
+    // the unit appearing at the same step the trigger fired in the live run.
+    const scn: Scenario = {
+      id: 'trig', title: 'Trig', briefingMd: 't',
+      grid: { width: 5, height: 5 }, tiles: [],
+      units: [
+        { id: 'fr1', side: 'french', type: 'line-infantry',
+          position: { x: 0, y: 3 }, facing: 'E', formation: 'line',
+          strength: 4, morale: 2 },
+        { id: 'au1', side: 'austrian', type: 'line-infantry',
+          position: { x: 4, y: 0 }, facing: 'W', formation: 'line',
+          strength: 4, morale: 2 },
+      ],
+      victory: [
+        { for: 'french', kind: 'survive-turns', args: { turns: 5 } },
+        { for: 'austrian', kind: 'survive-turns', args: { turns: 5 } },
+      ],
+      ai: { generalRule: 'defensive', triggers: [] },
+      scenarioTriggers: [{
+        id: 'guard-arrives',
+        when: { kind: 'whenSideHasUnitOnTile', side: 'french', pos: { x: 3, y: 3 } },
+        patch: {
+          unitsAdded: [{
+            id: 'ru-guard', side: 'russian', type: 'heavy-cavalry',
+            position: { x: 4, y: 4 }, facing: 'W', formation: 'line',
+            strength: 4, morale: 3,
+          }],
+        },
+        flavour: 'Guard charge!',
+      }],
+    };
+
+    // Live: move fr1 step by step toward (3, 3); trigger fires when it lands there.
+    let s = beginBattle(scn);
+    s = moveUnit(s, 'fr1', { x: 1, y: 3 }, { tiles: scn.tiles, grid: scn.grid }).state;
+    // Manual trigger-eval after the move — store.ts does this in normal flow.
+    s = applyScenarioTriggers(s, scn).state;
+
+    // No trigger yet (fr1 not at (3,3))
+    expect(s.units.find(u => u.id === 'ru-guard')).toBeUndefined();
+
+    // End french turn and resume to fresh fr1 budget
+    s = { ...s, units: s.units.map(u => u.id === 'fr1' ? { ...u, hasMoved: false, hasActed: false } : u) };
+    s = moveUnit(s, 'fr1', { x: 3, y: 3 }, { tiles: scn.tiles, grid: scn.grid }).state;
+    s = applyScenarioTriggers(s, scn).state;
+    expect(s.units.find(u => u.id === 'ru-guard')).toBeTruthy();
+
+    // Replay rebuild at the FINAL log index — trigger-fired event in log
+    // should bring the Russian Guard unit back at the same position.
+    const idx = s.log.length - 1;
+    const rebuilt = replayUpTo(scn, s.decisionsTaken, s.log, idx);
+    const guard = rebuilt.units.find(u => u.id === 'ru-guard');
+    expect(guard).toBeTruthy();
+    expect(guard!.position).toEqual({ x: 4, y: 4 });
+    expect(guard!.morale).toBe(3);
+    expect(rebuilt.triggersFired).toContain('guard-arrives');
   });
 
   it('handles attack-resolved events (strength + hasActed mutations)', () => {

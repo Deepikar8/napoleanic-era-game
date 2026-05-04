@@ -79,3 +79,24 @@ html { font-size: 16px; }
   transform-origin: center;
   transform-box: fill-box;
 }
+
+/* Respect prefers-reduced-motion (OS-level setting for users who get sick
+   on motion / use assistive tech). Disable looping animations entirely;
+   collapse one-shot ones to their end state instantly so behaviour is
+   preserved but the motion isn't. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-banner,
+  .animate-damage-flash,
+  .animate-float-up,
+  .animate-eliminate,
+  .animate-morale-reveal {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .animate-objective {
+    animation: none !important;
+    /* Without the pulse, fall back to a static highlight so the marker is
+       still distinguishable from a met objective. */
+    opacity: 1 !important;
+  }
+}

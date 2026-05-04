@@ -116,6 +116,7 @@ export function HelpOverlay() {
           <li><kbd className="px-1 border border-ink/40 rounded text-xs">Esc</kbd> — deselect / cancel</li>
           <li><kbd className="px-1 border border-ink/40 rounded text-xs">?</kbd> — open or close this help</li>
         </ul>
+        <p className="text-sm mt-2">Tab to focus the board, then use the <kbd className="px-1 border border-ink/40 rounded text-xs">Arrow</kbd> keys to move a gold cursor and <kbd className="px-1 border border-ink/40 rounded text-xs">Enter</kbd> to activate the cell — the same as clicking it.</p>
       </div>
     </div>
   );
