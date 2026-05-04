@@ -18,8 +18,13 @@ export function HelpOverlay() {
         <p className="text-sm">Each battle has a <strong>turn limit</strong> — shown in the top bar as <em>Turn X / Y</em>. One turn is one round where each side gets to move and attack with their units.</p>
         <ul className="list-disc list-inside text-sm mt-2">
           <li>On your turn, every unit can <strong>move</strong> once and <strong>attack/change formation</strong> once. A unit that has done both fades out.</li>
-          <li>Hit <strong>End Turn</strong> when you're done. The button asks for confirmation — and warns you if you have units that haven't acted yet (<em>"Confirm? 3 units haven't acted yet"</em> means you'd be wasting their turn). Tap again to confirm, or anywhere else to cancel.</li>
-          <li>If the turn limit runs out, victory conditions decide who wins. <em>Survive to turn N</em> means the defender wins if no one has lost first; a hit-and-hold goal needs you to capture the tile <em>before</em> the limit.</li>
+          <li>Hit <strong>End Turn</strong> when you're done. The button asks for confirmation — and warns you if you have units that haven't acted yet (<em>"Confirm? 3 units can still move or attack"</em> means you'd be wasting their turn). Tap again to confirm, or anywhere else to cancel.</li>
+          <li><strong>Two timing rules to know:</strong>
+            <ul className="list-disc list-inside ml-4 mt-1">
+              <li><em>Capture-tile</em> goals fire the moment you put a unit on the tile — even mid-turn. Sprint and you win.</li>
+              <li><em>Survive to turn N</em> and <em>Hold tile until turn N</em> only fire <strong>after both sides have completed turn N</strong> (so the check runs at the start of turn N+1). For "hold," that means the opposing side gets a full turn to try to push you off the tile before the win is awarded — be ready for the counter-attack.</li>
+            </ul>
+          </li>
           <li>Look at the small chips above the board — they show your French objectives and how close you are to each.</li>
         </ul>
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.14.7 — 2026-05-04
+
+External code review pass.
+
+### Fixed
+- **Ulm briefing was stale.** The dispatch prose still described Ulm as "position a French unit on the southern road tile (4, 6)" — which was the v1.0.x mechanic. Since v1.10.0 the scenario requires occupying ALL FOUR road tiles. Briefing rewritten: "Close all four. The Austrian army dissolves on the next sunrise." Lists each road tile explicitly so the kid knows what he's aiming at, mirrors the tactical hint and the on-board flags. The historical-prose framing is preserved.
+- **Help overlay timing language was imprecise.** Previously: "a hit-and-hold goal needs you to capture the tile before the limit." That phrasing was true for `capture-tile` (one-shot, fires immediately) but wrong for `hold-tile-for-turns` and `survive-turns`, which fire only after BOTH sides have completed the threshold turn. Now the help spells out the two timing rules separately:
+  - `capture-tile` — fires the moment you stand on the tile, even mid-turn.
+  - `survive-turns` / `hold-tile-for-turns` — fires at the start of turn N+1, after the opposing side has had its turn-N action. For *hold*, that means the enemy gets a full counter-attack turn to push you off before the win is awarded.
+
 ## v1.14.6 — 2026-05-04
 
 External code review pass.
