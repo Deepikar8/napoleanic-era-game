@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.14.4 — 2026-05-04
+
+Reported by playtester: "available buttons appear gray, why is that a design decision?"
+
+### Changed
+- **Secondary buttons restyled to look clickable, not muted.** The previous secondary style (`bg-ink/30 text-parchment` — a translucent dark wash on a light parchment page) read as "ghosty / disabled" to a fresh eye. Replaced with `bg-parchmentDark text-ink border border-ink/50 hover:bg-parchment` — a solid parchment-toned button with a visible ink border and a hover lighten. Clearly clickable, clearly an "alternative" to the gold primary CTA.
+- All buttons now have a small `transition-colors` for smooth hover feedback.
+- Primary (gold) and danger (red) buttons gained a darker matching border for legibility on light backgrounds, plus subtle hover variants.
+- Disabled state unchanged: 40% opacity + not-allowed cursor — distinct from "available secondary."
+
+The visual hierarchy now reads: gold = "do it", parchment-bordered = "alternative", red = "destructive confirm", faded gray = "can't do this right now".
+
 ## v1.14.3 — 2026-05-04
 
 Reported by playtester: "why can I not see my team's morale?"
