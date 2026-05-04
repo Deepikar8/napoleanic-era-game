@@ -258,7 +258,9 @@ export const useGame = create<Store>((set, get) => ({
         if (!cur.isAnimating || cur.scenario !== aiScenario) return;
 
         const ev = fullLog[i];
-        const intermediate = replayUpTo(aiScenario, stateBeforeAi.decisionsTaken, fullLog, i);
+        const intermediate = replayUpTo(
+          aiScenario, stateBeforeAi.decisionsTaken, fullLog, i, campaignScenarios,
+        );
         const caption = captionForEvent(ev, intermediate.units);
         set({
           state: intermediate,

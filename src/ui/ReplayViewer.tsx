@@ -4,6 +4,7 @@ import { Button, Panel } from './shared';
 import { BattleBoard } from './BattleBoard';
 import { UnitSpriteDefs } from '../art/unit-silhouettes';
 import { replayUpTo, eventUnitIds } from '../engine/replay';
+import { campaignScenarios } from '../scenarios';
 import type { BattleEvent } from '../engine/types';
 
 const describe = (e: BattleEvent): string => {
@@ -47,7 +48,7 @@ export function ReplayViewer() {
 
   const events = state.log;
   const safeI = events.length === 0 ? 0 : Math.min(Math.max(i, 0), events.length - 1);
-  const replayedState = replayUpTo(scenario, state.decisionsTaken, events, safeI);
+  const replayedState = replayUpTo(scenario, state.decisionsTaken, events, safeI, campaignScenarios);
   const involved = events[safeI] ? eventUnitIds(events[safeI]) : [];
 
   return (

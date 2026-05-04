@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.14.6 — 2026-05-04
+
+External code review pass.
+
+### Fixed
+- **Replay didn't reconstruct downstream decision patches.** `replayUpTo` called `beginBattle(scenario, decisions)` only — but `beginBattle`'s third parameter `pendingPatches` is what carries cross-battle decision consequences. So replays of (e.g.) Krems after a Haslach decision rebuilt from baseline unit stats, missing the patches that had altered Mortier's column during the live battle. Now `replayUpTo` accepts an optional `allScenarios` argument; when supplied, it walks each entry in `decisionsTaken`, finds the chosen option in its owning scenario, and re-derives the `pendingPatches` map from those options' `downstreamPatches`. Both call sites (`ReplayViewer` and the AI animation in `store.ts`) now pass `campaignScenarios`. Engine stays decoupled from the campaign list when called without the argument. New regression test pins both behaviours: without `allScenarios`, baseline stats; with it, the replayed unit reflects the patched morale.
+
 ## v1.14.5 — 2026-05-04
 
 Self-review pass. Two real fixes from a careful walk of the AI animation flow and trigger application path.

@@ -52,6 +52,62 @@ describe('replay rebuild', () => {
     }
   });
 
+  it('reconstructs downstream decision patches when allScenarios is supplied', () => {
+    // Set up: a "haslach" scenario with a decision whose chosen option
+    // applies a downstream patch to a "krems" scenario, and a "krems"
+    // scenario where the patch lowers fr-mortier's morale.
+    const decisionId = 'haslach-pre';
+    const haslach: Scenario = {
+      id: 'haslach', title: 'Haslach', briefingMd: 't',
+      grid: { width: 5, height: 5 }, tiles: [],
+      units: [
+        { id: 'fr1', side: 'french', type: 'line-infantry',
+          position: { x: 0, y: 0 }, facing: 'E', formation: 'line',
+          strength: 4, morale: 2 },
+      ],
+      victory: [{ for: 'french', kind: 'survive-turns', args: { turns: 2 } }],
+      ai: { generalRule: 'defensive', triggers: [] },
+      preBattleDecision: {
+        id: decisionId,
+        promptMd: 'choose',
+        options: [
+          {
+            label: 'Send forward (downstream consequence)',
+            patch: {},
+            downstreamPatches: {
+              krems: { unitOverrides: [{ id: 'fr-mortier', morale: 1 }] },
+            },
+          },
+          { label: 'Hold back', patch: {} },
+        ],
+      },
+    };
+    const krems: Scenario = {
+      id: 'krems', title: 'Krems', briefingMd: 't',
+      grid: { width: 5, height: 5 }, tiles: [],
+      units: [
+        { id: 'fr-mortier', side: 'french', type: 'line-infantry',
+          position: { x: 0, y: 0 }, facing: 'E', formation: 'line',
+          strength: 4, morale: 3 },                  // baseline morale = 3 elite
+      ],
+      victory: [{ for: 'french', kind: 'survive-turns', args: { turns: 2 } }],
+      ai: { generalRule: 'defensive', triggers: [] },
+    };
+    const allScenarios = [haslach, krems];
+    const decisions = [{ decisionId, optionIndex: 0 }];
+    const initial = beginBattle(krems, decisions, {
+      krems: [{ unitOverrides: [{ id: 'fr-mortier', morale: 1 as const }] }],
+    });
+
+    // Without allScenarios — patches lost, baseline morale (3) shows.
+    const withoutCtx = replayUpTo(krems, decisions, initial.log, 0);
+    expect(withoutCtx.units.find(u => u.id === 'fr-mortier')!.morale).toBe(3);
+
+    // With allScenarios — patch re-derived, replayed morale matches live (1).
+    const withCtx = replayUpTo(krems, decisions, initial.log, 0, allScenarios);
+    expect(withCtx.units.find(u => u.id === 'fr-mortier')!.morale).toBe(1);
+  });
+
   it('handles attack-resolved events (strength + hasActed mutations)', () => {
     const tiny: Scenario = {
       id: 'tiny',

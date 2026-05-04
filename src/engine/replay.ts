@@ -75,13 +75,43 @@ function applyEvent(state: GameState, e: BattleEvent): GameState {
   }
 }
 
+/** Re-derive pendingPatches from a list of taken decisions, by looking up
+ *  each decision's chosen option in its owning scenario and collecting that
+ *  option's downstream patches. Without this, a replay of (e.g.) Krems after
+ *  a Haslach decision would reconstruct from baseline unit stats — missing
+ *  the downstream effect the player actually fought against.
+ *  Returns an empty object when allScenarios is not provided (engine stays
+ *  decoupled from the campaign list for callers that don't need this). */
+function derivePendingPatches(
+  decisions: GameState['decisionsTaken'],
+  allScenarios: Scenario[] | undefined,
+): GameState['pendingPatches'] {
+  const out: GameState['pendingPatches'] = {};
+  if (!allScenarios) return out;
+  for (const taken of decisions) {
+    const owning = allScenarios.find(sc => sc.preBattleDecision?.id === taken.decisionId);
+    const opt = owning?.preBattleDecision?.options[taken.optionIndex];
+    if (!opt?.downstreamPatches) continue;
+    for (const [sid, patch] of Object.entries(opt.downstreamPatches)) {
+      (out[sid] ??= []).push(patch);
+    }
+  }
+  return out;
+}
+
 export function replayUpTo(
   scenario: Scenario,
   decisions: GameState['decisionsTaken'],
   events: BattleEvent[],
   upToIndex: number,
+  allScenarios?: Scenario[],
 ): GameState {
-  let s = beginBattle(scenario, decisions);
+  // Re-derive cross-battle decision consequences. Without this, a replay
+  // of a later scenario (e.g. Krems after a Haslach decision) would start
+  // from baseline unit stats — missing patches that were applied during
+  // live play.
+  const pendingPatches = derivePendingPatches(decisions, allScenarios);
+  let s = beginBattle(scenario, decisions, pendingPatches);
   // beginBattle's state already encodes events[0] (the first turn-started).
   // Reapply events 1..upToIndex.
   const last = Math.min(upToIndex, events.length - 1);
