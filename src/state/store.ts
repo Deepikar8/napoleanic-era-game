@@ -237,6 +237,12 @@ export const useGame = create<Store>((set, get) => ({
       const stepDelay = 900;
 
       const finish = () => {
+        // Bail out if the player navigated away mid-animation. The tick()
+        // function's check is similar but doesn't cover the final scheduled
+        // setTimeout; without this guard, finish() can clobber a Splash /
+        // Campaign Menu screen and overwrite the saved state with stale data.
+        const cur = get();
+        if (!cur.isAnimating || cur.scenario !== aiScenario) return;
         set({
           state: ai.state, history: [ai.state],
           screen: v2.kind === 'decided' ? 'battle-end' : 'battle',

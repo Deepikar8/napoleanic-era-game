@@ -26,7 +26,12 @@ const conditionMet = (cond: ScenarioTrigger['when'], state: GameState): boolean 
 /** Apply a scenario patch's unit effects to a live GameState. Mid-battle
  *  triggers can add, remove, or override units. tilesOverridden /
  *  victoryOverride / turnLimitOverride don't apply at runtime — they're
- *  scenario-data concerns. */
+ *  scenario-data concerns.
+ *
+ *  Tile occupancy is checked before adding new units: if a unit-add would
+ *  land on a position another unit already holds, that one is skipped (with
+ *  a console warning) rather than silently stacking two units at the same
+ *  square, which would break the engine's one-unit-per-tile invariant. */
 export function applyPatchToState(state: GameState, p: ScenarioPatch): GameState {
   let units = state.units;
   if (p.unitsRemovedByIds?.length) {
@@ -39,7 +44,20 @@ export function applyPatchToState(state: GameState, p: ScenarioPatch): GameState
     });
   }
   if (p.unitsAdded?.length) {
-    units = [...units, ...p.unitsAdded];
+    const occupied = new Set(units.map(u => `${u.position.x},${u.position.y}`));
+    const addable: Unit[] = [];
+    for (const incoming of p.unitsAdded) {
+      const key = `${incoming.position.x},${incoming.position.y}`;
+      if (occupied.has(key)) {
+        console.warn(
+          `[scenario-trigger] dropped unit-add for ${incoming.id}: tile (${incoming.position.x},${incoming.position.y}) is already occupied`,
+        );
+        continue;
+      }
+      addable.push(incoming);
+      occupied.add(key);  // protect against two added units claiming the same tile
+    }
+    units = [...units, ...addable];
   }
   return { ...state, units };
 }

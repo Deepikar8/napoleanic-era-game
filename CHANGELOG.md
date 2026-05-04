@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.14.5 — 2026-05-04
+
+Self-review pass. Two real fixes from a careful walk of the AI animation flow and trigger application path.
+
+### Fixed
+- **AI animation `finish()` now bails out if the user navigated away.** `tick()` already aborted itself on navigation, but the final scheduled `setTimeout(finish, ...)` was already in flight and had no guard. If the kid hit Esc / went to the Splash mid-animation, `finish()` still fired, overwriting the destination screen with `'battle' / 'battle-end'` and saving stale state. Now `finish` checks `isAnimating` and the scenario identity before touching state.
+- **`applyPatchToState` skips unit-add patches that would land on an already-occupied tile.** A trigger could otherwise stack two units on the same square — breaking the engine's one-unit-per-tile invariant and producing visual mess. Affected entries are dropped with a `console.warn`; non-colliding entries from the same patch still apply. New test covers the collision case. Currently no live trigger hits this path, but it's a latent landmine for any future scenario that adds reinforcements during play.
+
+### Documented (not changed)
+- `'unit-retreated'` event kind exists in the type, replay handles it, the UI formats it — but `combat.ts` never actually emits it (it just removes 0-strength units). It's dead code, kept for future retreat semantics.
+
 ## v1.14.4 — 2026-05-04
 
 Reported by playtester: "available buttons appear gray, why is that a design decision?"

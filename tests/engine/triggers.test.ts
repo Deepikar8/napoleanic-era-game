@@ -107,6 +107,29 @@ describe('scenario triggers', () => {
     expect(r.events.some(e => e.kind === 'trigger-fired' && e.triggerId === 'turn-2-event')).toBe(true);
   });
 
+  it('drops a unit-add patch entry when its tile is already occupied (no double-stack)', async () => {
+    const { applyPatchToState } = await import('../../src/engine/triggers');
+    const baseState = beginBattle(baseScenario);
+    // au1 starts at (11, 11) — try to add another unit at the same tile.
+    const beforeWarn = console.warn;
+    let warned = 0;
+    console.warn = () => { warned++; };
+    try {
+      const after = applyPatchToState(baseState, {
+        unitsAdded: [
+          u({ id: 'collide', side: 'austrian', position: { x: 11, y: 11 } }),
+          u({ id: 'safe',    side: 'austrian', position: { x: 5,  y: 5  } }),
+        ],
+      });
+      // Collide skipped; safe added.
+      expect(after.units.find(u => u.id === 'collide')).toBeUndefined();
+      expect(after.units.find(u => u.id === 'safe')).toBeTruthy();
+      expect(warned).toBe(1);
+    } finally {
+      console.warn = beforeWarn;
+    }
+  });
+
   it('whenSideStrengthBelow fires when total drops past threshold', () => {
     const trig: ScenarioTrigger = {
       id: 's',

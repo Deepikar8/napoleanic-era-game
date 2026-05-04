@@ -146,7 +146,11 @@ export function BattleBoard(p: BattleBoardProps) {
 
     if (newFx.length > 0) {
       setEffects(cur => [...cur, ...newFx]);
-      // Auto-prune after the longest animation duration finishes.
+      // Auto-prune after the longest animation duration finishes. We don't
+      // clear this in cleanup: doing so would cancel the prune if state.units
+      // changes again within 1500ms, leaving effects stuck in state forever.
+      // Modern React doesn't warn about setState in late timers, and a
+      // setEffects() on an unmounted component is a no-op.
       const ids = new Set(newFx.map(f => f.id));
       setTimeout(() => {
         setEffects(cur => cur.filter(f => !ids.has(f.id)));
