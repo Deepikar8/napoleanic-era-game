@@ -160,13 +160,27 @@ function BattleScreen() {
           <Button onClick={toggleHelp} kind="secondary" disabled={isAnimating}>?</Button>
           <Button onClick={toggleDetails} kind="secondary" disabled={isAnimating}>{showDetails ? 'Hide details' : 'Show details'}</Button>
           <div className="flex-1" />
-          {selected && !isAnimating && (
-            <>
-              <Button onClick={() => doFormation('line')}   kind="secondary">Line</Button>
-              <Button onClick={() => doFormation('column')} kind="secondary">Column</Button>
-              <Button onClick={() => doFormation('square')} kind="secondary">Square</Button>
-            </>
-          )}
+          {/* Formation buttons — only when YOUR unit is selected and could
+              still take an action this turn. Disabled when the unit has
+              already moved+attacked. Current formation highlighted as primary. */}
+          {selected && sideCanAct(selected.side) && !isAnimating && (() => {
+            const cantChange = !!selected.hasActed;
+            return (
+              <>
+                <span className="text-sm text-parchment opacity-70 mr-1 self-center">Formation:</span>
+                {(['line', 'column', 'square'] as const).map(f => (
+                  <Button
+                    key={f}
+                    onClick={() => doFormation(f)}
+                    kind={selected.formation === f ? 'primary' : 'secondary'}
+                    disabled={cantChange || selected.formation === f}
+                  >
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </Button>
+                ))}
+              </>
+            );
+          })()}
           <Button onClick={onEndTurn} kind={endTurnArmed ? 'danger' : 'primary'} disabled={isAnimating}>
             {endTurnArmed
               ? (actionableCount > 0

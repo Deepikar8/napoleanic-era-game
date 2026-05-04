@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.14.2 — 2026-05-04
+
+Reported by playtester: "the buttons are grayed out so appear not clickable".
+
+### Fixed
+- **Formation buttons (Line / Column / Square) now communicate their state honestly.**
+  - Hidden entirely when the selected unit isn't on the active side (you can't change an enemy's formation, so the buttons shouldn't appear).
+  - Grayed-and-disabled (40% opacity, not-allowed cursor) when the selected unit has `hasActed === true` — i.e., it already moved+attacked or already changed formation, so it can't change again this turn. Before this change, the buttons looked clickable but did nothing (or flashed an error toast).
+  - The button matching the unit's *current* formation now renders in primary gold style instead of secondary gray, so the kid sees which shape his unit is in. It's also disabled (clicking the same formation is a no-op).
+  - New "Formation:" label preceding the buttons so it's clear what they're for.
+
 ## v1.14.1 — 2026-05-03
 
 External code review pass.
