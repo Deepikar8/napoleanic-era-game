@@ -345,8 +345,9 @@ export function BattleBoard(p: BattleBoardProps) {
                   fontSize="9" fontWeight="700" fill="#2a2018">
               {u.strength}
             </text>
-            {/* Revealed morale — top-right corner. Hidden until first attack. */}
-            {u.moraleRevealed && (
+            {/* Morale stars — top-right corner. Always shown for your own
+                units; hidden for enemies until first attack. */}
+            {(u.moraleRevealed || u.side === 'french') && (
               <text
                 x={cellSize - 11} y={11}
                 textAnchor="end"
@@ -452,8 +453,10 @@ export function BattleBoard(p: BattleBoardProps) {
         const ty = placeAbove
           ? tooltipPos.y * cellSize - tipH - 4
           : tooltipPos.y * cellSize + cellSize + 4;
+        // Own (French) morale is always shown; enemy morale stays '?' until probed.
         const moraleStr = occupant
-          ? (occupant.moraleRevealed ? '★'.repeat(occupant.morale) : '?')
+          ? ((occupant.moraleRevealed || occupant.side === 'french')
+              ? '★'.repeat(occupant.morale) : '?')
           : '';
         return (
           <g pointerEvents="none">

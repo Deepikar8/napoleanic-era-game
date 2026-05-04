@@ -94,7 +94,7 @@ export function HelpOverlay() {
           <li>★★ <strong>Veteran</strong> (2) — solid line soldiers</li>
           <li>★★★ <strong>Elite</strong> (3) — Old Guard, hand-picked, almost never breaks</li>
         </ul>
-        <p className="text-sm mt-2">Morale adds straight to the combat score, so a 4-strength elite (4+3=7) is much stronger than a 4-strength conscript (4+1=5) that looks the same on the board. The defender's morale is hidden until the <em>first time</em> they're attacked — your first attack of a battle is always partly a probe to see what you're really up against.</p>
+        <p className="text-sm mt-2">Morale adds straight to the combat score, so a 4-strength elite (4+3=7) is much stronger than a 4-strength conscript (4+1=5) that looks the same on the board. <strong>You always see your own troops' morale</strong> (you're the commander; you picked them). The <strong>enemy's morale is hidden</strong> until the first time you attack them — your first attack of a battle is always partly a probe to see what you're really up against.</p>
 
         <h3 className="font-bold mt-3">Solo mode &amp; AI difficulty</h3>
         <p className="text-sm">When <strong>Play solo</strong> is on (set on the splash), the computer plays the Coalition during their turns. Three difficulty levels:</p>

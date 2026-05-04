@@ -17,10 +17,16 @@ const MORALE_LABEL: Record<Morale, string> = {
   3: 'Elite',
 };
 
-const moraleDisplay = (unit: Unit): string =>
-  unit.moraleRevealed
+// Your own units' morale is always visible — you're the commander, you picked
+// them. Only the ENEMY's morale is hidden until first contact.
+const isOwnSide = (unit: Unit): boolean => unit.side === 'french';
+
+const moraleDisplay = (unit: Unit): string => {
+  const reveal = unit.moraleRevealed || isOwnSide(unit);
+  return reveal
     ? `${'★'.repeat(unit.morale)} ${MORALE_LABEL[unit.morale]}`
-    : '? (revealed on first attack)';
+    : '? (revealed when first attacked)';
+};
 
 export function UnitPanel({ unit }: { unit: Unit | null }) {
   if (!unit) return <Panel title="No unit selected"><p className="text-sm opacity-60">Tap a unit on the board.</p></Panel>;
@@ -35,7 +41,7 @@ export function UnitPanel({ unit }: { unit: Unit | null }) {
         <Row label="Morale" value={moraleDisplay(unit)} />
       </div>
       <p className="mt-2 text-xs italic opacity-70">
-        Morale is how steady the troops are. Higher = harder to break. Hidden until they're attacked.
+        Morale = how steady the troops are. Higher = harder to break. You see your own troops' morale always; the enemy's is hidden until you attack them.
       </p>
     </Panel>
   );

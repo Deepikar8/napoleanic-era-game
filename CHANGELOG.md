@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.14.3 — 2026-05-04
+
+Reported by playtester: "why can I not see my team's morale?"
+
+### Fixed
+- **Your own units' morale is always visible.** The `moraleRevealed` flag was firing only after a unit got attacked, *regardless of side*, so French units stayed at `?` until they took fire. That contradicted the design's reasoning ("you're the commander, you picked them"). Now the UI treats `unit.side === 'french'` as always-revealed for morale display:
+  - UnitPanel side panel shows the rank name + stars instead of `?`.
+  - The cell's top-right star badge always renders for own units.
+  - The hover tooltip shows stars instead of `?`.
+- Engine flag still tracks "this enemy has been probed" for actual enemies — the hidden-information mechanic stays for opposing units, which is the part that mattered.
+- Help-overlay Morale section now spells out the asymmetry: own troops' morale is visible from the start; the enemy's is hidden until first contact.
+
 ## v1.14.2 — 2026-05-04
 
 Reported by playtester: "the buttons are grayed out so appear not clickable".
