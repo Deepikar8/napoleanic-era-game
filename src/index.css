@@ -3,7 +3,68 @@
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
-body { margin: 0; }
+body {
+  margin: 0;
+  font-family: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-weight: 500;
+  letter-spacing: 0;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-serif {
+  font-family: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.battle-board-svg text {
+  font-family: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Campaign board skin material. The live SVG remains the source of gameplay
+   truth; these textures only establish the painted map atmosphere. */
+.battle-screen {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255, 241, 188, 0.24), transparent 32rem),
+    linear-gradient(135deg, rgba(31, 22, 13, 0.96), rgba(89, 59, 28, 0.82)),
+    url('./assets/skins/ulm-austerlitz-1805/parchment.png');
+  background-size: auto, auto, 512px 512px;
+}
+
+.battle-board-frame {
+  padding: 0.48rem;
+  border: 2px solid #4a3219;
+  border-radius: 0.45rem;
+  background:
+    linear-gradient(180deg, rgba(247, 229, 178, 0.22), rgba(37, 24, 12, 0.34)),
+    url('./assets/skins/ulm-austerlitz-1805/parchment.png');
+  background-size: auto, 512px 512px;
+  box-shadow:
+    0 22px 48px rgba(16, 10, 5, 0.44),
+    inset 0 0 0 1px rgba(255, 244, 205, 0.35),
+    inset 0 0 22px rgba(37, 24, 12, 0.28);
+}
+
+.battle-board-svg {
+  display: block;
+  border-radius: 0.25rem;
+  background: #dbc28a;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 205, 0.28),
+    inset 0 0 42px rgba(42, 28, 14, 0.22);
+}
 
 /* Responsive base font size — phone/iPad keeps 16px (correct touch sizing),
    desktops scale up so a kid playing at a normal viewing distance can read. */

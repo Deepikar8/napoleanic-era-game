@@ -1,10 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { GameState, Pos, Scenario, TerrainKind, Unit, VictoryCondition } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
 import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
 import { isOnActiveSide, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
+import { getCampaignBoardSkin } from '../art/campaign-skins';
+import grenadierInk from '../assets/units/grenadier-raster-ink.png';
+import grenadierWhite from '../assets/units/grenadier-raster-white.png';
+import heavyCavalryInk from '../assets/units/heavy-cavalry-raster-ink.png';
+import heavyCavalryWhite from '../assets/units/heavy-cavalry-raster-white.png';
+import lightInfantryInk from '../assets/units/light-infantry-raster-ink.png';
+import lightInfantryWhite from '../assets/units/light-infantry-raster-white.png';
+import lightCavalryInk from '../assets/units/light-cavalry-raster-ink.png';
+import lightCavalryWhite from '../assets/units/light-cavalry-raster-white.png';
+import lineInfantryInk from '../assets/units/line-infantry-raster-ink.png';
+import lineInfantryWhite from '../assets/units/line-infantry-raster-white.png';
 
 interface ObjectiveMarker { pos: Pos; kind: 'capture' | 'hold'; met: boolean; }
 
@@ -31,27 +42,77 @@ function frenchObjectiveTiles(state: GameState, conds: VictoryCondition[]): Obje
   return out;
 }
 
-const TERRAIN_FILL: Record<string, string> = {
-  plain: '#e8dfc3', forest: '#6b8a4a', hill: '#c4a878',
-  town: '#a08868', river: '#5a7a9a', bridge: '#caa770',
-  marsh: '#7a8a5a', road: '#d8c89a',
+const TERRAIN_PATTERN: Record<TerrainKind, string> = {
+  plain: 'url(#terrain-plain)',
+  forest: 'url(#terrain-forest)',
+  hill: 'url(#terrain-hill)',
+  town: 'url(#terrain-town)',
+  river: 'url(#terrain-river)',
+  bridge: 'url(#terrain-bridge)',
+  marsh: 'url(#terrain-marsh)',
+  road: 'url(#terrain-road)',
 };
 
-const SIDE_FILL: Record<Unit['side'], string> = {
-  french: '#2c5aa0', austrian: '#ece4d0', russian: '#4a7a4a',
+const COUNTER_FILL: Record<Unit['side'], string> = {
+  french: 'url(#counter-french)',
+  austrian: 'url(#counter-austrian)',
+  russian: 'url(#counter-russian)',
 };
 const SIDE_TEXT: Record<Unit['side'], string> = {
   french: '#ffffff', austrian: '#2a2018', russian: '#ffffff',
 };
+const SIDE_ICON_DETAIL: Record<Unit['side'], string> = {
+  french: '#2f5f9f',
+  austrian: '#f5edd6',
+  russian: '#365f3d',
+};
 
-const TYPE_BADGE: Record<Unit['type'], { code: string; bg: string; fg: string }> = {
-  'line-infantry':   { code: 'LI', bg: '#5a4a30', fg: '#f5f0e6' },
-  'light-infantry':  { code: 'Li', bg: '#7a6a40', fg: '#f5f0e6' },
-  'grenadier':       { code: 'Gr', bg: '#3a2a10', fg: '#f5f0e6' },
-  'light-cavalry':   { code: 'LC', bg: '#a04040', fg: '#f5f0e6' },
-  'heavy-cavalry':   { code: 'HC', bg: '#702020', fg: '#f5f0e6' },
-  'foot-artillery':  { code: 'FA', bg: '#2a3a5a', fg: '#f5f0e6' },
-  'horse-artillery': { code: 'HA', bg: '#1a2a4a', fg: '#f5f0e6' },
+const TYPE_CODE: Record<Unit['type'], string> = {
+  'line-infantry': 'LI',
+  'light-infantry': 'Li',
+  'grenadier': 'Gr',
+  'light-cavalry': 'LC',
+  'heavy-cavalry': 'HC',
+  'foot-artillery': 'FA',
+  'horse-artillery': 'HA',
+};
+
+const UNIT_ICON_LAYOUT: Record<Unit['type'], { x: number; y: number; scale: number; width: number; height: number }> = {
+  'line-infantry': { x: 7.5, y: 8.2, scale: 1, width: 14, height: 28 },
+  'light-infantry': { x: 1.2, y: 11.2, scale: 1, width: 32, height: 24 },
+  'grenadier': { x: 8.2, y: 7.8, scale: 1, width: 13, height: 28 },
+  'light-cavalry': { x: 1.6, y: 10.2, scale: 1, width: 32, height: 25 },
+  'heavy-cavalry': { x: 1.2, y: 9.4, scale: 1, width: 33, height: 26 },
+  'foot-artillery': { x: 2.6, y: 6.8, scale: 1.34, width: 24, height: 24 },
+  'horse-artillery': { x: 2.4, y: 6.6, scale: 1.34, width: 24, height: 24 },
+};
+
+const UNIT_RASTER_ICON: Partial<Record<Unit['type'], Record<Unit['side'], string>>> = {
+  'line-infantry': {
+    french: lineInfantryWhite,
+    austrian: lineInfantryInk,
+    russian: lineInfantryWhite,
+  },
+  'light-infantry': {
+    french: lightInfantryWhite,
+    austrian: lightInfantryInk,
+    russian: lightInfantryWhite,
+  },
+  'grenadier': {
+    french: grenadierWhite,
+    austrian: grenadierInk,
+    russian: grenadierWhite,
+  },
+  'light-cavalry': {
+    french: lightCavalryWhite,
+    austrian: lightCavalryInk,
+    russian: lightCavalryWhite,
+  },
+  'heavy-cavalry': {
+    french: heavyCavalryWhite,
+    austrian: heavyCavalryInk,
+    russian: heavyCavalryWhite,
+  },
 };
 
 const TERRAIN_INFO: Record<TerrainKind, { name: string; effect: string }> = {
@@ -101,6 +162,8 @@ export function BattleBoard(p: BattleBoardProps) {
   const cellSize = 48;
   const w = scenario.grid.width * cellSize;
   const h = scenario.grid.height * cellSize;
+  const skin = getCampaignBoardSkin(state.campaignId);
+  const terrainTextureEntries = Object.entries(skin.terrainTextures) as Array<[TerrainKind, string]>;
 
   const [tooltipPos, setTooltipPos] = useState<Pos | null>(null);
 
@@ -190,6 +253,64 @@ export function BattleBoard(p: BattleBoardProps) {
 
   const objectives = frenchObjectiveTiles(state, scenario.victory);
 
+  const terrainOverlay = (kind: TerrainKind, x: number, y: number) => {
+    const ox = x * cellSize;
+    const oy = y * cellSize;
+    const cx = ox + cellSize / 2;
+    const cy = oy + cellSize / 2;
+    switch (kind) {
+      case 'hill':
+        return (
+          <g pointerEvents="none" opacity={0.72}>
+            <path d={`M${ox + 7} ${oy + 30} Q${cx} ${oy + 14} ${ox + 41} ${oy + 30}`}
+                  fill="none" stroke="#6b4c29" strokeWidth={1.3} />
+            <path d={`M${ox + 9} ${oy + 37} Q${cx} ${oy + 24} ${ox + 39} ${oy + 37}`}
+                  fill="none" stroke="#6b4c29" strokeWidth={1} opacity={0.78} />
+          </g>
+        );
+      case 'road':
+        return (
+          <g pointerEvents="none" opacity={0.82}>
+            <path d={`M${cx} ${oy - 4} C${cx - 5} ${oy + 12} ${cx + 6} ${oy + 29} ${cx} ${oy + 52}`}
+                  fill="none" stroke="#6d4c2a" strokeWidth={3.4} opacity={0.34} />
+            <path d={`M${cx} ${oy - 4} C${cx - 5} ${oy + 12} ${cx + 6} ${oy + 29} ${cx} ${oy + 52}`}
+                  fill="none" stroke="#2f2518" strokeWidth={0.8} strokeDasharray="3 3" opacity={0.52} />
+          </g>
+        );
+      case 'river':
+        return (
+          <g pointerEvents="none" opacity={0.9}>
+            <path d={`M${ox - 2} ${cy - 7} Q${ox + 12} ${cy - 15} ${ox + 25} ${cy - 6} T${ox + 51} ${cy - 7} L${ox + 51} ${cy + 9} Q${ox + 37} ${cy + 16} ${ox + 24} ${cy + 8} T${ox - 2} ${cy + 9} Z`}
+                  fill="#557891" opacity={0.9} />
+            <path d={`M${ox + 1} ${cy} Q${ox + 13} ${cy - 7} ${ox + 24} ${cy} T${ox + 48} ${cy}`}
+                  fill="none" stroke="#d2e1e8" strokeWidth={1.2} opacity={0.78} />
+          </g>
+        );
+      case 'bridge':
+        return (
+          <g pointerEvents="none" opacity={0.94}>
+            <rect x={ox + 16} y={oy + 3} width={16} height={42} rx={1}
+                  fill="#9a6f3a" stroke="#4a3219" strokeWidth={0.8} />
+            {[9, 16, 23, 30, 37].map(offset => (
+              <line key={offset} x1={ox + 17} y1={oy + offset} x2={ox + 31} y2={oy + offset}
+                    stroke="#4a3219" strokeWidth={0.8} />
+            ))}
+          </g>
+        );
+      case 'marsh':
+        return (
+          <g pointerEvents="none" opacity={0.78}>
+            {[8, 18, 29, 39].map((mx, i) => (
+              <path key={mx} d={`M${ox + mx} ${oy + 36 - (i % 2) * 10} q3 -8 6 0 M${ox + mx + 3} ${oy + 36 - (i % 2) * 10} v-12`}
+                    fill="none" stroke="#2f4425" strokeWidth={1.1} strokeLinecap="round" />
+            ))}
+          </g>
+        );
+      default:
+        return null;
+    }
+  };
+
   // Keyboard handler: arrows move cursor; Enter/Space activate.
   // Activation = whatever a click on that cell would do (move, attack, select).
   const onKey = (e: React.KeyboardEvent) => {
@@ -226,10 +347,10 @@ export function BattleBoard(p: BattleBoardProps) {
   };
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
+    <div className="battle-board-frame w-full mx-auto" style={{ maxWidth: 'min(100%, 80vh)' }}>
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className="w-full h-auto bg-parchmentDark border border-ink/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-gilt"
+      className="battle-board-svg w-full h-auto bg-parchmentDark border border-ink/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gilt"
       tabIndex={0}
       role="grid"
       aria-label={`Battle board, ${scenario.grid.width} by ${scenario.grid.height}. Use arrow keys to move the cursor, Enter to act.`}
@@ -238,64 +359,73 @@ export function BattleBoard(p: BattleBoardProps) {
       onBlur={() => setSvgFocused(false)}
     >
       <defs>
-        {/* Terrain patterns. Each renders the base colour plus a small motif
-            that tiles every 8–12 user-units. 'plain' has no pattern — kept as
-            a flat fill so units stand out cleanly. */}
-        <pattern id="terrain-forest" patternUnits="userSpaceOnUse" width="10" height="10">
-          <rect width="10" height="10" fill="#6b8a4a"/>
-          <circle cx="2.5" cy="3" r="1.6" fill="#3d5a2a"/>
-          <circle cx="7" cy="7" r="1.4" fill="#3d5a2a"/>
-        </pattern>
-        <pattern id="terrain-hill" patternUnits="userSpaceOnUse" width="14" height="7">
-          <rect width="14" height="7" fill="#c4a878"/>
-          <path d="M 0 4.5 Q 7 2 14 4.5" stroke="#8a6a40" strokeWidth="0.8" fill="none"/>
-          <path d="M 0 7   Q 7 4.5 14 7"  stroke="#8a6a40" strokeWidth="0.6" fill="none" opacity="0.6"/>
-        </pattern>
-        <pattern id="terrain-town" patternUnits="userSpaceOnUse" width="10" height="10">
-          <rect width="10" height="10" fill="#a08868"/>
-          <rect x="1.2" y="3.5" width="2.6" height="3.5" fill="#5a4830"/>
-          <polygon points="1.2,3.5 2.5,2.2 3.8,3.5" fill="#5a4830"/>
-          <rect x="5.5" y="2.5" width="2.4" height="4.5" fill="#5a4830"/>
-          <polygon points="5.5,2.5 6.7,1.4 7.9,2.5" fill="#5a4830"/>
-        </pattern>
-        <pattern id="terrain-river" patternUnits="userSpaceOnUse" width="14" height="7">
-          <rect width="14" height="7" fill="#5a7a9a"/>
-          <path d="M 0 3.5 Q 3.5 1.5 7 3.5 T 14 3.5" stroke="#a8c0d8" strokeWidth="0.7" fill="none"/>
-          <path d="M 0 6   Q 3.5 4 7 6     T 14 6"   stroke="#a8c0d8" strokeWidth="0.5" fill="none" opacity="0.7"/>
-        </pattern>
-        <pattern id="terrain-bridge" patternUnits="userSpaceOnUse" width="6" height="6">
-          <rect width="6" height="6" fill="#caa770"/>
-          <line x1="1.5" y1="0" x2="1.5" y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
-          <line x1="3"   y1="0" x2="3"   y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
-          <line x1="4.5" y1="0" x2="4.5" y2="6" stroke="#7a5a30" strokeWidth="0.7"/>
-        </pattern>
-        <pattern id="terrain-marsh" patternUnits="userSpaceOnUse" width="8" height="8">
-          <rect width="8" height="8" fill="#7a8a5a"/>
-          <circle cx="2"   cy="2"   r="0.7" fill="#4a5a30"/>
-          <circle cx="6"   cy="3.5" r="0.5" fill="#4a5a30"/>
-          <circle cx="3.5" cy="6"   r="0.6" fill="#4a5a30"/>
-          <circle cx="7"   cy="7"   r="0.4" fill="#4a5a30"/>
-        </pattern>
-        <pattern id="terrain-road" patternUnits="userSpaceOnUse" width="12" height="12">
-          <rect width="12" height="12" fill="#d8c89a"/>
-          <line x1="6" y1="0" x2="6" y2="12" stroke="#9a8050" strokeWidth="0.7" strokeDasharray="2.5 2.5"/>
+        {/* Campaign-skin texture patterns. Gameplay remains data-driven; these
+            image fills only change presentation. */}
+        <filter id="paper-grain" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="18" result="noise" />
+          <feColorMatrix type="saturate" values="0" />
+          <feComponentTransfer>
+            <feFuncA type="table" tableValues="0 0.14" />
+          </feComponentTransfer>
+          <feBlend mode="multiply" in2="SourceGraphic" />
+        </filter>
+
+        <filter id="counter-shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="1.8" dy="2.4" stdDeviation="1.4" floodColor={skin.counter.shadow} floodOpacity="0.52" />
+          <feDropShadow dx="-0.4" dy="-0.5" stdDeviation="0.45" floodColor="#fff4cd" floodOpacity="0.18" />
+        </filter>
+
+        <linearGradient id="counter-french" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#386bb4" />
+          <stop offset="55%" stopColor="#2c5aa0" />
+          <stop offset="100%" stopColor="#173a78" />
+        </linearGradient>
+        <linearGradient id="counter-austrian" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff7df" />
+          <stop offset="62%" stopColor="#ece4d0" />
+          <stop offset="100%" stopColor="#c8b99a" />
+        </linearGradient>
+        <linearGradient id="counter-russian" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#5d8d55" />
+          <stop offset="58%" stopColor="#4a7a4a" />
+          <stop offset="100%" stopColor="#2f5735" />
+        </linearGradient>
+
+        {terrainTextureEntries.map(([kind, href]) => (
+          <pattern key={kind} id={`terrain-${kind}`} patternUnits="userSpaceOnUse" width="48" height="48">
+            <image href={href} width="48" height="48" preserveAspectRatio="xMidYMid slice" />
+          </pattern>
+        ))}
+        <pattern id="terrain-move" patternUnits="userSpaceOnUse" width="12" height="12">
+          <rect width="12" height="12" fill="#b8d8b8" />
+          <path d="M0 12 L12 0" stroke="#6f9a62" strokeWidth="0.7" opacity="0.35" />
         </pattern>
       </defs>
+      <rect width={w} height={h} fill={skin.paperTint} />
+      <image
+        href={skin.boardTexture}
+        width={w}
+        height={h}
+        preserveAspectRatio="xMidYMid slice"
+        opacity={0.9}
+      />
+      <rect
+        x={1} y={1}
+        width={w - 2} height={h - 2}
+        fill="none"
+        stroke={skin.borderColor}
+        strokeWidth={2.2}
+        pointerEvents="none"
+      />
       {/* Tiles */}
       {Array.from({ length: scenario.grid.height }, (_, y) =>
         Array.from({ length: scenario.grid.width }, (_, x) => {
           const ter = scenario.tiles.find(t => posEq(t.pos, { x, y }))?.terrain ?? 'plain';
           const isMove = moveSet.has(posKey({ x, y }));
-          const fill = isMove
-            ? '#b8d8b8'
-            : ter === 'plain' ? TERRAIN_FILL.plain : `url(#terrain-${ter})`;
+          const fill = isMove ? 'url(#terrain-move)' : ter === 'plain' ? 'transparent' : TERRAIN_PATTERN[ter];
           return (
-            <rect
+            <g
               key={`${x},${y}`}
-              x={x * cellSize} y={y * cellSize}
-              width={cellSize} height={cellSize}
-              fill={fill}
-              stroke="#8a7a5a" strokeWidth={0.5}
               onClick={() => {
                 if (selected && isMove) { p.onMoveTo({ x, y }); setTooltipPos(null); }
                 else if (selected) { p.onSelectUnit(null); setTooltipPos(null); }
@@ -304,9 +434,35 @@ export function BattleBoard(p: BattleBoardProps) {
               onMouseEnter={() => setTooltipPos({ x, y })}
               onMouseLeave={() => setTooltipPos(prev => prev && prev.x === x && prev.y === y ? null : prev)}
               style={{ cursor: isMove ? 'pointer' : 'default' }}
-            />
+            >
+              <rect
+                x={x * cellSize} y={y * cellSize}
+                width={cellSize} height={cellSize}
+                fill={fill}
+                stroke={skin.gridColor}
+                strokeWidth={0.5}
+                opacity={isMove ? 1 : ter === 'plain' ? 0.72 : 0.9}
+              />
+              {!isMove && terrainOverlay(ter, x, y)}
+            </g>
           );
         })
+      )}
+
+      {Array.from({ length: scenario.grid.height + 1 }, (_, y) =>
+        Array.from({ length: scenario.grid.width + 1 }, (_, x) => (
+          <circle
+            key={`grid-dot-${x},${y}`}
+            cx={x * cellSize}
+            cy={y * cellSize}
+            r={1.8}
+            fill="none"
+            stroke={skin.gridIntersectionColor}
+            strokeWidth={0.62}
+            opacity={0.52}
+            pointerEvents="none"
+          />
+        ))
       )}
 
       {/* Keyboard focus cursor — rendered between tiles and objectives so it
@@ -365,6 +521,8 @@ export function BattleBoard(p: BattleBoardProps) {
         const isAttackable = enemySet.has(u.id);
         const isSpent = canAct(u.side) && u.hasActed === true && u.hasMoved === true;
         const isReady = canAct(u.side) && !isSpent;   // active side, still has actions
+        const icon = UNIT_ICON_LAYOUT[u.type];
+        const rasterIcon = UNIT_RASTER_ICON[u.type]?.[u.side];
         const onClick = () => {
           if (!isAttackable) { p.onSelectUnit(u.id); return; }
           if (hoveredEnemyId === u.id) p.onAttack(u.id);
@@ -391,26 +549,60 @@ export function BattleBoard(p: BattleBoardProps) {
             )}
             <rect
               width={cellSize - 8} height={cellSize - 8}
-              rx="3"
-              fill={SIDE_FILL[u.side]}
+              rx="4"
+              fill={COUNTER_FILL[u.side]}
+              filter="url(#counter-shadow)"
               stroke={
-                isSelected || isHighlighted ? '#d4a017'        // gold — selected / highlighted
+                isSelected || isHighlighted ? skin.counter.highlight        // gold — selected / highlighted
                 : isReady                    ? '#3a8a3a'        // green — active side, can still act
-                                             : 'rgba(0,0,0,0.3)'
+                                             : skin.counter.inactiveStroke
               }
               strokeWidth={isSelected || isHighlighted ? 3 : isReady ? 2.4 : 1.2}
             />
-            <g transform={`translate(${(cellSize - 8) * 0.1}, ${(cellSize - 8) * 0.1}) scale(${(cellSize - 8) * 0.032})`}
-               style={{ color: SIDE_TEXT[u.side] }}>
-              <use href={`#${unitSilhouetteId(u.type)}`} width={24} height={24} />
-            </g>
-            {/* Unit-type badge — top-left, always visible */}
-            <rect x={2} y={2} width={16} height={11}
-                  fill={TYPE_BADGE[u.type].bg} stroke="#1a120a" strokeWidth={0.6} rx="2" />
-            <text x={10} y={10.5} textAnchor="middle"
-                  fontSize="8" fontWeight="700" fill={TYPE_BADGE[u.type].fg}>
-              {TYPE_BADGE[u.type].code}
-            </text>
+            <rect
+              x={1.2} y={1.2}
+              width={cellSize - 10.4} height={(cellSize - 10.4) / 2}
+              rx="3"
+              fill="#fff8d8"
+              opacity={u.side === 'austrian' ? 0.22 : 0.12}
+              pointerEvents="none"
+            />
+            <rect
+              x={1.2} y={1.2}
+              width={cellSize - 10.4} height={cellSize - 10.4}
+              rx="3"
+              fill="none"
+              stroke={skin.counter.bevel}
+              strokeWidth={0.85}
+              opacity={0.48}
+              pointerEvents="none"
+            />
+            <path
+              d={`M4 ${cellSize - 11} H${cellSize - 17} M${cellSize - 10} 5 V${cellSize - 17}`}
+              stroke="#1a120a"
+              strokeWidth={0.7}
+              opacity={0.26}
+              pointerEvents="none"
+            />
+            {rasterIcon ? (
+              <image
+                href={rasterIcon}
+                x={icon.x}
+                y={icon.y}
+                width={icon.width}
+                height={icon.height}
+                preserveAspectRatio="xMidYMid meet"
+                pointerEvents="none"
+              />
+            ) : (
+              <g transform={`translate(${icon.x}, ${icon.y}) scale(${icon.scale})`}
+                 style={{
+                   color: SIDE_TEXT[u.side],
+                   '--unit-detail': SIDE_ICON_DETAIL[u.side],
+                 } as CSSProperties}>
+                <use href={`#${unitSilhouetteId(u.type)}`} width={icon.width} height={icon.height} />
+              </g>
+            )}
             {/* Strength badge — bottom-right */}
             <rect x={cellSize - 22} y={cellSize - 22} width={14} height={12}
                   fill="#d4a017" stroke="#2a2018" strokeWidth={0.6} rx="2" />
@@ -418,26 +610,31 @@ export function BattleBoard(p: BattleBoardProps) {
                   fontSize="9" fontWeight="700" fill="#2a2018">
               {u.strength}
             </text>
-            {/* Morale stars — top-right corner. Always shown for your own
-                units; hidden for enemies until first attack. */}
+            {/* Morale stars: dedicated top strip so they do not cover unit art. */}
             {(u.moraleRevealed || u.side === 'french') && (
-              <text
-                x={cellSize - 11} y={11}
-                textAnchor="end"
-                fontSize="9" fontWeight="700"
-                fill="#d4a017"
-                stroke="#1a120a" strokeWidth={0.4}
-                paintOrder="stroke"
-              >
-                {'★'.repeat(u.morale)}
-              </text>
+              <g pointerEvents="none">
+                <rect
+                  x={3.5} y={2.3}
+                  width={Math.min(26, 8.4 * u.morale + 2)}
+                  height={8.4}
+                  rx={2}
+                  fill="#1a120a"
+                  opacity={0.22}
+                />
+                <text
+                  x={5} y={9}
+                  textAnchor="start"
+                  fontSize="8" fontWeight="700"
+                  fill="#d4a017"
+                  stroke="#1a120a" strokeWidth={0.35}
+                  paintOrder="stroke"
+                >
+                  {'★'.repeat(u.morale)}
+                </text>
+              </g>
             )}
             {p.showDetails && (
               <>
-                {/* Formation glyph */}
-                <text x={4} y={cellSize - 12} fontSize="11" fontWeight="700" fill={SIDE_TEXT[u.side]}>
-                  {u.formation === 'line' ? '—' : u.formation === 'column' ? '⋮' : '▢'}
-                </text>
                 {/* Facing triangle on the front edge */}
                 <polygon
                   points={facingTriangle(u.facing, cellSize - 8)}
@@ -548,7 +745,7 @@ export function BattleBoard(p: BattleBoardProps) {
                   {occupant.name ?? occupant.id} ({occupant.side})
                 </text>
                 <text x={tx + 8} y={ty + 64} fontSize="9" fill="#f5f0e6">
-                  {TYPE_BADGE[occupant.type].code} · {occupant.formation} · {occupant.facing}
+                  {TYPE_CODE[occupant.type]} · {occupant.formation} · {occupant.facing}
                 </text>
                 <text x={tx + 8} y={ty + 78} fontSize="9" fill="#f5f0e6">
                   Strength {occupant.strength}/4 · Morale {moraleStr}

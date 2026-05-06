@@ -13,7 +13,9 @@ export default {
         gilt: '#d4a017',
       },
       fontFamily: {
-        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        serif: ['"Cormorant Garamond"', '"Iowan Old Style"', '"Palatino Linotype"', 'Georgia', 'serif'],
+        ui: ['"Cormorant Garamond"', '"Iowan Old Style"', '"Palatino Linotype"', 'Georgia', 'serif'],
+        mono: ['"Courier Prime"', '"Courier New"', 'monospace'],
       },
     },
   },

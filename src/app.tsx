@@ -12,6 +12,7 @@ import { ErrorToast } from './ui/ErrorToast';
 import { TutorialHint } from './ui/TutorialHint';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
+import { UnitReference } from './ui/UnitReference';
 import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
@@ -115,7 +116,7 @@ function BattleScreen() {
   const objectives = summarizeVictory(state, scenario.victory).filter(o => o.for === 'french');
 
   return (
-    <div className="min-h-full p-4 grid grid-cols-1 md:grid-cols-[1fr_22rem] gap-4">
+    <div className="battle-screen min-h-full p-4 grid grid-cols-1 md:grid-cols-[1fr_22rem] gap-4">
       <UnitSpriteDefs />
       <div className="flex flex-col">
         <header className="flex items-center justify-between mb-2 bg-ink text-parchment px-3 py-2 rounded">
@@ -192,6 +193,7 @@ function BattleScreen() {
       </div>
       <aside>
         <UnitPanel unit={selected} />
+        <UnitReference />
         <AttackPreview
           attacker={selected} defender={hoveredEnemy}
           allUnits={state.units} tiles={scenario.tiles}
