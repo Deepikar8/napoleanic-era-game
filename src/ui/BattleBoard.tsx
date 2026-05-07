@@ -1,21 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { GameState, Pos, Scenario, TerrainKind, Unit, VictoryCondition } from '../engine/types';
 import { posEq, posKey } from '../engine/types';
-import { chebyshev } from '../engine/grid';
 import { legalMoves } from '../engine/movement';
+import { canAttackUnit } from '../engine/attack-range';
 import { isOnActiveSide, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
 import { getCampaignBoardSkin } from '../art/campaign-skins';
-import grenadierInk from '../assets/units/grenadier-raster-ink.png';
-import grenadierWhite from '../assets/units/grenadier-raster-white.png';
-import heavyCavalryInk from '../assets/units/heavy-cavalry-raster-ink.png';
-import heavyCavalryWhite from '../assets/units/heavy-cavalry-raster-white.png';
-import lightInfantryInk from '../assets/units/light-infantry-raster-ink.png';
-import lightInfantryWhite from '../assets/units/light-infantry-raster-white.png';
-import lightCavalryInk from '../assets/units/light-cavalry-raster-ink.png';
-import lightCavalryWhite from '../assets/units/light-cavalry-raster-white.png';
-import lineInfantryInk from '../assets/units/line-infantry-raster-ink.png';
-import lineInfantryWhite from '../assets/units/line-infantry-raster-white.png';
+import { getUnitRasterIcon, UNIT_COUNTER_ICON_LAYOUT } from '../art/unit-art';
 
 interface ObjectiveMarker { pos: Pos; kind: 'capture' | 'hold'; met: boolean; }
 
@@ -77,42 +68,10 @@ const TYPE_CODE: Record<Unit['type'], string> = {
   'horse-artillery': 'HA',
 };
 
-const UNIT_ICON_LAYOUT: Record<Unit['type'], { x: number; y: number; scale: number; width: number; height: number }> = {
-  'line-infantry': { x: 7.5, y: 8.2, scale: 1, width: 14, height: 28 },
-  'light-infantry': { x: 1.2, y: 11.2, scale: 1, width: 32, height: 24 },
-  'grenadier': { x: 8.2, y: 7.8, scale: 1, width: 13, height: 28 },
-  'light-cavalry': { x: 1.6, y: 10.2, scale: 1, width: 32, height: 25 },
-  'heavy-cavalry': { x: 1.2, y: 9.4, scale: 1, width: 33, height: 26 },
-  'foot-artillery': { x: 2.6, y: 6.8, scale: 1.34, width: 24, height: 24 },
-  'horse-artillery': { x: 2.4, y: 6.6, scale: 1.34, width: 24, height: 24 },
-};
-
-const UNIT_RASTER_ICON: Partial<Record<Unit['type'], Record<Unit['side'], string>>> = {
-  'line-infantry': {
-    french: lineInfantryWhite,
-    austrian: lineInfantryInk,
-    russian: lineInfantryWhite,
-  },
-  'light-infantry': {
-    french: lightInfantryWhite,
-    austrian: lightInfantryInk,
-    russian: lightInfantryWhite,
-  },
-  'grenadier': {
-    french: grenadierWhite,
-    austrian: grenadierInk,
-    russian: grenadierWhite,
-  },
-  'light-cavalry': {
-    french: lightCavalryWhite,
-    austrian: lightCavalryInk,
-    russian: lightCavalryWhite,
-  },
-  'heavy-cavalry': {
-    french: heavyCavalryWhite,
-    austrian: heavyCavalryInk,
-    russian: heavyCavalryWhite,
-  },
+const FORMATION_ICON_PATH: Record<Unit['formation'], string> = {
+  line: 'M1.4 6.5 H4.8',
+  column: 'M3.1 2.7 V10.3',
+  square: 'M1.2 3.6 H5 V9.4 H1.2 Z',
 };
 
 const TERRAIN_INFO: Record<TerrainKind, { name: string; effect: string }> = {
@@ -244,12 +203,12 @@ export function BattleBoard(p: BattleBoardProps) {
   // Only treat enemies as "attackable" when the selected unit can actually
   // attack this turn AND the target is on the opposing team. Coalition
   // partners (austrian + russian) count as same team.
-  const adjacentEnemies = selected && canAct(selected.side) && !selected.hasActed
+  const attackableEnemies = selected && canAct(selected.side) && !selected.hasActed
     ? state.units.filter(u =>
         !sameTeam(u.side, selected.side) &&
-        chebyshev(u.position, selected.position) === 1)
+        canAttackUnit(selected, u))
     : [];
-  const enemySet = new Set(adjacentEnemies.map(u => u.id));
+  const enemySet = new Set(attackableEnemies.map(u => u.id));
 
   const objectives = frenchObjectiveTiles(state, scenario.victory);
 
@@ -521,8 +480,8 @@ export function BattleBoard(p: BattleBoardProps) {
         const isAttackable = enemySet.has(u.id);
         const isSpent = canAct(u.side) && u.hasActed === true && u.hasMoved === true;
         const isReady = canAct(u.side) && !isSpent;   // active side, still has actions
-        const icon = UNIT_ICON_LAYOUT[u.type];
-        const rasterIcon = UNIT_RASTER_ICON[u.type]?.[u.side];
+        const icon = UNIT_COUNTER_ICON_LAYOUT[u.type];
+        const rasterIcon = getUnitRasterIcon(u.type, u.side);
         const onClick = () => {
           if (!isAttackable) { p.onSelectUnit(u.id); return; }
           if (hoveredEnemyId === u.id) p.onAttack(u.id);
@@ -631,6 +590,33 @@ export function BattleBoard(p: BattleBoardProps) {
                 >
                   {'★'.repeat(u.morale)}
                 </text>
+              </g>
+            )}
+            {(p.showDetails || u.formation !== 'line') && (
+              <g
+                role="img"
+                aria-label={`Formation: ${u.formation}`}
+                pointerEvents="none"
+              >
+                <rect
+                  x={0.7}
+                  y={14.4}
+                  width={5.3}
+                  height={17.5}
+                  rx={1.5}
+                  fill="#1a120a"
+                  opacity={isSelected || isHighlighted ? 0.68 : 0.42}
+                />
+                <path
+                  d={FORMATION_ICON_PATH[u.formation]}
+                  transform="translate(0.35 17.6)"
+                  fill={u.formation === 'square' ? 'none' : '#f7ecd0'}
+                  stroke="#f7ecd0"
+                  strokeWidth={u.formation === 'square' ? 1.1 : 1.15}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={0.95}
+                />
               </g>
             )}
             {p.showDetails && (

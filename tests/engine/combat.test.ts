@@ -68,6 +68,20 @@ describe('combat', () => {
     }
   });
 
+  it('artillery attacks do not damage the attacker', () => {
+    const a = u({ id: 'a', side: 'french', type: 'foot-artillery',
+                 position: { x: 0, y: 0 }, strength: 4, morale: 1 });
+    const d = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 },
+                 strength: 4, morale: 3 });
+    const { updatedUnits, events } = resolveAttack(a, d, [a, d], []);
+    const ev = events.find(e => e.kind === 'attack-resolved');
+    expect(ev).toBeDefined();
+    if (ev?.kind === 'attack-resolved') {
+      expect(ev.attackerLoss).toBe(0);
+    }
+    expect(updatedUnits.find(unit => unit.id === 'a')!.strength).toBe(4);
+  });
+
   it('eliminates a unit reduced to 0 strength', () => {
     const a = u({ id: 'a', side: 'french', position: { x: 0, y: 0 },
                  strength: 4, morale: 3 });   // big

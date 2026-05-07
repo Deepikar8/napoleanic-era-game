@@ -67,7 +67,20 @@ describe('turn manager', () => {
       ],
     };
     const state = beginBattle(farScenario);
-    expect(() => attack(state, 'fr1', 'au1')).toThrow(/not adjacent/);
+    expect(() => attack(state, 'fr1', 'au1')).toThrow(/out of attack range/);
+  });
+
+  it('artillery can attack enemies at range', () => {
+    const artilleryScenario: Scenario = {
+      ...trivialScenario,
+      units: [
+        u({ id: 'fr1', side: 'french', type: 'foot-artillery', position: { x: 0, y: 0 } }),
+        u({ id: 'au1', side: 'austrian', position: { x: 0, y: 3 } }),
+      ],
+    };
+    const state = beginBattle(artilleryScenario);
+    const r = attack(state, 'fr1', 'au1');
+    expect(r.events.some(e => e.kind === 'attack-resolved')).toBe(true);
   });
 
   it('endTurn advances turn and switches side', () => {

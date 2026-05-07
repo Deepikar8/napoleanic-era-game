@@ -1,10 +1,11 @@
 import type { Unit, Tile } from './types';
 import { posEq } from './types';
 import { chebyshev } from './grid';
+import { isArtilleryType } from './attack-range';
 
 const isCavalry = (t: Unit['type']) => t === 'light-cavalry' || t === 'heavy-cavalry';
 const isInfantry = (t: Unit['type']) => t === 'line-infantry' || t === 'light-infantry' || t === 'grenadier';
-const isArtillery = (t: Unit['type']) => t === 'foot-artillery' || t === 'horse-artillery';
+const isArtillery = isArtilleryType;
 
 const terrainAt = (p: Unit['position'], tiles: Tile[]) =>
   tiles.find(t => posEq(t.pos, p))?.terrain ?? 'plain';

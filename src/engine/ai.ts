@@ -3,6 +3,7 @@ import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { moveUnit, attack, changeFormation, endTurn } from './turn';
 import { previewAttack } from './preview';
+import { canAttackUnit } from './attack-range';
 import { sameTeam, isOnActiveSide } from './sides';
 import { applyScenarioTriggers } from './triggers';
 
@@ -78,6 +79,8 @@ export function runAiTurn(
 
     const adjEnemies = s.units.filter(o =>
       !sameTeam(o.side, cur.side) && chebyshev(o.position, cur.position) === 1);
+    const attackableEnemies = s.units.filter(o =>
+      !sameTeam(o.side, cur.side) && canAttackUnit(cur, o));
 
     // 1. Defensive formation switch (normal+) — infantry threatened by adjacent cavalry forms square.
     if (difficulty !== 'easy' &&
@@ -90,12 +93,12 @@ export function runAiTurn(
       } catch { /* fall through */ }
     }
 
-    // 2. Attack adjacent enemy
-    if (adjEnemies.length > 0 && !cur.hasActed) {
+    // 2. Attack any enemy in weapon range
+    if (attackableEnemies.length > 0 && !cur.hasActed) {
       if (difficulty === 'easy') {
-        // Easy: attack the first adjacent enemy. No preview math, no skip-if-bad.
+        // Easy: attack the first enemy in range. No preview math, no skip-if-bad.
         try {
-          const r = attack(s, cur.id, adjEnemies[0].id);
+          const r = attack(s, cur.id, attackableEnemies[0].id);
           s = r.state; events.push(...r.events);
           continue;
         } catch { /* skip */ }
@@ -103,7 +106,7 @@ export function runAiTurn(
         // Normal/Hard: use preview to pick best target; skip predicted losses.
         let bestTarget: Unit | null = null;
         let bestGap = -Infinity;
-        for (const e of adjEnemies) {
+        for (const e of attackableEnemies) {
           const p = previewAttack(cur, e, s.units, scenario.tiles);
           const gap = p.attackerScore - p.defenderScore;
           if (gap > bestGap || (gap === bestGap && bestTarget && e.strength < bestTarget.strength)) {

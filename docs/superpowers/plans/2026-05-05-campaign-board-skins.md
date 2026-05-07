@@ -41,9 +41,9 @@ command, which can pull counter art or dark board areas into repeatable
 textures.
 
 ```bash
-sips -c 96 96 src/assets/art/board-visual-direction.png --cropOffset 520 345 --out src/assets/skins/ulm-austerlitz-1805/plain.png
-sips -c 96 96 src/assets/art/board-visual-direction.png --cropOffset 525 505 --out src/assets/skins/ulm-austerlitz-1805/forest.png
-sips -c 120 120 src/assets/art/board-visual-direction.png --cropOffset 25 810 --out src/assets/skins/ulm-austerlitz-1805/town.png
+sips -c 96 96 docs/assets/reference/board-visual-direction.png --cropOffset 520 345 --out src/assets/skins/ulm-austerlitz-1805/plain.png
+sips -c 96 96 docs/assets/reference/board-visual-direction.png --cropOffset 525 505 --out src/assets/skins/ulm-austerlitz-1805/forest.png
+sips -c 120 120 docs/assets/reference/board-visual-direction.png --cropOffset 25 810 --out src/assets/skins/ulm-austerlitz-1805/town.png
 cp src/assets/skins/ulm-austerlitz-1805/plain.png src/assets/skins/ulm-austerlitz-1805/road.png
 cp src/assets/skins/ulm-austerlitz-1805/plain.png src/assets/skins/ulm-austerlitz-1805/parchment.png
 sips -z 1024 1024 src/assets/skins/ulm-austerlitz-1805/parchment.png

@@ -1,6 +1,7 @@
 import type { Unit, Scenario } from '../engine/types';
 import { Panel } from './shared';
 import { previewAttack } from '../engine/preview';
+import { isArtilleryType } from '../engine/attack-range';
 
 export function AttackPreview({
   attacker, defender, allUnits, tiles,
@@ -10,6 +11,7 @@ export function AttackPreview({
 }) {
   if (!attacker || !defender) return null;
   const p = previewAttack(attacker, defender, allUnits, tiles);
+  const isArtilleryAttack = isArtilleryType(attacker.type);
   const dScoreDisplay = p.defenderRevealed
     ? p.defenderScore.toString()
     : `${p.defenderScore - defender.morale} + ?morale`;
@@ -27,6 +29,11 @@ export function AttackPreview({
           <span className="text-ink/60">Predicted</span>
           <span className="font-bold">{p.defenderRevealed ? p.predictedResult : 'depends on hidden morale'}</span>
         </div>
+        {isArtilleryAttack && (
+          <div className="text-xs italic text-ink/70">
+            Artillery fires at range and takes no return damage.
+          </div>
+        )}
       </div>
     </Panel>
   );

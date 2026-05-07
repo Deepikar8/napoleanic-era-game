@@ -6,6 +6,7 @@ import { chebyshev } from './grid';
 import { legalMoves } from './movement';
 import { resolveAttack } from './combat';
 import { applyPatch } from './patch';
+import { canAttackUnit } from './attack-range';
 import { COALITION, isOnActiveSide, sameTeam } from './sides';
 
 function nextSide(current: Side, units: Unit[]): Side {
@@ -137,7 +138,7 @@ export function attack(
   if (!canAct(a.side, state.currentSide)) throw new Error(`${attackerId} is not your unit`);
   if (areSameTeam(a.side, d.side)) throw new Error(`Cannot attack a friendly unit`);
   if (a.hasActed) throw new Error(`${attackerId} already acted this turn`);
-  if (chebyshev(a.position, d.position) !== 1) throw new Error(`Units not adjacent`);
+  if (!canAttackUnit(a, d)) throw new Error(`Target out of attack range`);
 
   const { updatedUnits, events: combatEvents } = resolveAttack(a, d, state.units, []);
   const finalUnits = updatedUnits.map(u =>

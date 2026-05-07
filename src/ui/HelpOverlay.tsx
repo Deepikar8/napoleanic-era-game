@@ -29,9 +29,10 @@ export function HelpOverlay() {
         </ul>
 
         <h3 className="font-bold mt-4">Combat — who can attack whom</h3>
-        <p className="text-sm">Any unit can attack any adjacent enemy. The only requirements:</p>
+        <p className="text-sm">Most units attack adjacent enemies. Artillery can bombard at range. The only requirements:</p>
         <ul className="list-disc list-inside text-sm">
-          <li>Target must be on the next square (the 8 squares around you).</li>
+          <li>Infantry and cavalry targets must be on the next square (the 8 squares around you).</li>
+          <li>Foot and horse artillery can attack up to 3 squares away and take no return damage from the attack.</li>
           <li>It's your side's turn AND the unit hasn't already attacked.</li>
           <li>Target is on the other team. (Austria + Russia count as one team — they can't attack each other.)</li>
         </ul>

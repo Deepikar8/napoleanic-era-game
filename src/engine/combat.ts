@@ -1,14 +1,14 @@
 import type { Unit, Tile, BattleEvent } from './types';
 import { posEq } from './types';
 import { chebyshev } from './grid';
+import { isArtilleryType } from './attack-range';
 
 type AttackResult = 'attacker-broken' | 'attacker-repulsed' | 'exchange' | 'defender-retreats' | 'defender-broken';
 
 const isCavalry = (t: Unit['type']) => t === 'light-cavalry' || t === 'heavy-cavalry';
 const isInfantry = (t: Unit['type']) =>
   t === 'line-infantry' || t === 'light-infantry' || t === 'grenadier';
-const isArtillery = (t: Unit['type']) =>
-  t === 'foot-artillery' || t === 'horse-artillery';
+const isArtillery = isArtilleryType;
 
 const terrainAt = (p: Unit['position'], tiles: Tile[]) =>
   tiles.find(t => posEq(t.pos, p))?.terrain ?? 'plain';
@@ -73,6 +73,7 @@ export function resolveAttack(
   else if (gap <= 1)  { result = 'exchange';          attackerLoss = 1; defenderLoss = 1; }
   else if (gap === 2) { result = 'defender-retreats'; attackerLoss = 0; defenderLoss = 0; }
   else                { result = 'defender-broken';   defenderLoss = 2; }
+  if (isArtillery(attacker.type)) attackerLoss = 0;
 
   events.push({
     kind: 'attack-resolved',

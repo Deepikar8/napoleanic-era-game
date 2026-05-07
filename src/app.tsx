@@ -17,7 +17,7 @@ import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
 import { UnitSpriteDefs } from './art/unit-silhouettes';
-import { checkVictory, summarizeVictory, legalMoves, chebyshev } from './engine';
+import { checkVictory, summarizeVictory, legalMoves, canAttackUnit } from './engine';
 
 export default function App() {
   const screen = useGame(s => s.screen);
@@ -99,9 +99,9 @@ function BattleScreen() {
     const canStillMove = !u.hasMoved && legalMoves(u, state.units, scenario).length > 0;
     if (canStillMove) return true;
     if (!u.hasActed) {
-      const hasAdjacentEnemy = state.units.some(o =>
-        !sameTeam(o.side, u.side) && chebyshev(o.position, u.position) === 1);
-      if (hasAdjacentEnemy) return true;
+      const hasEnemyInRange = state.units.some(o =>
+        !sameTeam(o.side, u.side) && canAttackUnit(u, o));
+      if (hasEnemyInRange) return true;
     }
     return false;
   }).length;

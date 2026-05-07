@@ -1,14 +1,14 @@
 import type { GameState, TerrainKind } from '../engine/types';
 
-import parchmentTexture from '../assets/skins/ulm-austerlitz-1805/parchment.png';
-import plainTexture from '../assets/skins/ulm-austerlitz-1805/plain.png';
-import forestTexture from '../assets/skins/ulm-austerlitz-1805/forest.png';
-import townTexture from '../assets/skins/ulm-austerlitz-1805/town.png';
-import hillTexture from '../assets/skins/ulm-austerlitz-1805/hill.png';
-import roadTexture from '../assets/skins/ulm-austerlitz-1805/road.png';
-import riverTexture from '../assets/skins/ulm-austerlitz-1805/river.png';
-import bridgeTexture from '../assets/skins/ulm-austerlitz-1805/bridge.png';
-import marshTexture from '../assets/skins/ulm-austerlitz-1805/marsh.png';
+import parchmentTexture from '../assets/skins/ulm-austerlitz-1805/parchment.jpg';
+import plainTexture from '../assets/skins/ulm-austerlitz-1805/plain.jpg';
+import forestTexture from '../assets/skins/ulm-austerlitz-1805/forest.jpg';
+import townTexture from '../assets/skins/ulm-austerlitz-1805/town.jpg';
+import hillTexture from '../assets/skins/ulm-austerlitz-1805/hill.jpg';
+import roadTexture from '../assets/skins/ulm-austerlitz-1805/road.jpg';
+import riverTexture from '../assets/skins/ulm-austerlitz-1805/river.jpg';
+import bridgeTexture from '../assets/skins/ulm-austerlitz-1805/bridge.jpg';
+import marshTexture from '../assets/skins/ulm-austerlitz-1805/marsh.jpg';
 
 export type CampaignSkinId = GameState['campaignId'];
 

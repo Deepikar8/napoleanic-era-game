@@ -125,6 +125,28 @@ describe('AI', () => {
     expect(r.events.some(e => e.kind === 'attack-resolved')).toBe(true);
   });
 
+  it('artillery attacks from range instead of requiring adjacency', () => {
+    const scn: Scenario = {
+      id: 'artillery-range-ai', title: 'Artillery range AI', briefingMd: 't',
+      grid: { width: 6, height: 4 }, tiles: [],
+      units: [
+        u({ id: 'au-gun', side: 'austrian', type: 'foot-artillery', position: { x: 4, y: 1 } }),
+        u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 }, moraleRevealed: true }),
+      ],
+      victory: [{ for: 'french', kind: 'survive-turns', args: { turns: 3 } }],
+      ai: { generalRule: 'defensive', triggers: [] },
+    };
+    let state = beginBattle(scn);
+    state = { ...state, currentSide: 'austrian' };
+    const r = runAiTurn(state, scn, 'normal');
+    const attackEv = r.events.find(e => e.kind === 'attack-resolved');
+    expect(attackEv).toBeTruthy();
+    if (attackEv?.kind === 'attack-resolved') {
+      expect(attackEv.attackerId).toBe('au-gun');
+      expect(attackEv.defenderId).toBe('fr1');
+    }
+  });
+
   it('hard difficulty refuses attacks at gap=-1 that normal would still take', () => {
     // Attacker: strength 4 + morale 1 = 5, +1 line vs infantry = 6.
     // Defender: strength 4 + morale 2 = 6, +1 line vs infantry = 7.
