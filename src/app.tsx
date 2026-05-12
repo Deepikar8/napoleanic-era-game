@@ -13,6 +13,7 @@ import { TutorialHint } from './ui/TutorialHint';
 import { BattleBoard } from './ui/BattleBoard';
 import { UnitPanel } from './ui/UnitPanel';
 import { UnitReference } from './ui/UnitReference';
+import { RulesQuickReference } from './ui/RulesQuickReference';
 import { AttackPreview } from './ui/AttackPreview';
 import { BattleLog } from './ui/BattleLog';
 import { Button } from './ui/shared';
@@ -85,11 +86,10 @@ function BattleScreen() {
   if (!state || !scenario) return <Splash />;
 
   const sideCanAct = (side: typeof state.currentSide) => isOnActiveSide(side, state.currentSide);
-  const hasAustrian = scenario.units.some(u => u.side === 'austrian');
-  const hasRussian = scenario.units.some(u => u.side === 'russian');
+  const coalitionSides = new Set(scenario.units.filter(u => u.side !== 'french').map(u => u.side));
   const sideLabel = state.currentSide === 'french'
     ? 'french'
-    : (hasAustrian && hasRussian ? 'coalition' : state.currentSide);
+    : (coalitionSides.size > 1 ? 'coalition' : state.currentSide);
   // Count units that *actually* still have an action available — has any legal
   // move target OR has an adjacent enemy it could attack. A unit that moved to
   // an empty square with no enemies in reach should not count, even though
@@ -194,6 +194,7 @@ function BattleScreen() {
       <aside>
         <UnitPanel unit={selected} />
         <UnitReference />
+        <RulesQuickReference selectedUnit={selected} allUnits={state.units} />
         <AttackPreview
           attacker={selected} defender={hoveredEnemy}
           allUnits={state.units} tiles={scenario.tiles}

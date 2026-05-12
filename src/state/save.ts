@@ -19,12 +19,13 @@ export interface SaveBackend {
 // localStorage is user-editable; we can't trust the contents past a JSON parse.
 // Validate the shape we actually need before handing it to the engine.
 
-const SIDES = new Set(['french', 'austrian', 'russian']);
+const SIDES = new Set(['french', 'austrian', 'russian', 'spanish', 'british', 'portuguese']);
 const FORMATIONS = new Set(['line', 'column', 'square']);
 const FACINGS = new Set(['N', 'E', 'S', 'W']);
 const STRENGTHS = new Set([1, 2, 3, 4]);
 const MORALES = new Set([1, 2, 3]);
 const PHASES = new Set(['orders', 'end-of-turn']);
+const CAMPAIGNS = new Set(['ulm-austerlitz-1805', 'peninsular-war-1808']);
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -42,13 +43,17 @@ const isUnit = (v: unknown): boolean => {
   if (typeof v.formation !== 'string' || !FORMATIONS.has(v.formation)) return false;
   if (typeof v.strength !== 'number' || !STRENGTHS.has(v.strength)) return false;
   if (typeof v.morale !== 'number' || !MORALES.has(v.morale)) return false;
+  if (v.cohesion !== undefined && (
+    typeof v.cohesion !== 'number' ||
+    ![-2, -1, 0, 1, 2].includes(v.cohesion)
+  )) return false;
   return true;
 };
 
 export function isValidGameState(v: unknown): v is GameState {
   if (!isObject(v)) return false;
   if (v.schemaVersion !== 1) return false;
-  if (v.campaignId !== 'ulm-austerlitz-1805') return false;
+  if (typeof v.campaignId !== 'string' || !CAMPAIGNS.has(v.campaignId)) return false;
   if (typeof v.scenarioIndex !== 'number' || v.scenarioIndex < 0) return false;
   if (typeof v.scenarioId !== 'string') return false;
   if (typeof v.currentSide !== 'string' || !SIDES.has(v.currentSide)) return false;
@@ -94,6 +99,7 @@ function migrate(run: SavedRun): SavedRun {
     ...run,
     state: {
       ...run.state,
+      units: run.state.units.map(u => ({ ...u, cohesion: u.cohesion ?? 0 })),
       pendingPatches: run.state.pendingPatches ?? {},
       triggersFired: run.state.triggersFired ?? [],
     },

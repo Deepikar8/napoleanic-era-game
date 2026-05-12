@@ -107,4 +107,99 @@ describe('combat', () => {
       expect(ev.attackerScore).toBeGreaterThan(ev.defenderScore);
     }
   });
+
+  it('cohesion changes combat morale score', () => {
+    const steady = u({ id: 'steady', side: 'french', position: { x: 0, y: 0 }, cohesion: 2 });
+    const baseline = u({ id: 'base', side: 'french', position: { x: 0, y: 0 }, cohesion: 0 });
+    const d = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 }, moraleRevealed: true });
+
+    const steadyEvent = resolveAttack(steady, d, [steady, d], []).events.find(e => e.kind === 'attack-resolved');
+    const baselineEvent = resolveAttack(baseline, d, [baseline, d], []).events.find(e => e.kind === 'attack-resolved');
+
+    if (steadyEvent?.kind === 'attack-resolved' && baselineEvent?.kind === 'attack-resolved') {
+      expect(steadyEvent.attackerScore - baselineEvent.attackerScore).toBe(2);
+    } else {
+      throw new Error('attack-resolved event missing');
+    }
+  });
+
+  it('nearby friendly support improves combat score', () => {
+    const a = u({ id: 'a', side: 'french', position: { x: 0, y: 0 } });
+    const supportedDefender = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 }, moraleRevealed: true });
+    const defenderSupport = u({ id: 'd-support', side: 'austrian', position: { x: 1, y: 1 } });
+    const unsupportedEvent = resolveAttack(a, supportedDefender, [a, supportedDefender], [])
+      .events.find(e => e.kind === 'attack-resolved');
+    const supportedEvent = resolveAttack(a, supportedDefender, [a, supportedDefender, defenderSupport], [])
+      .events.find(e => e.kind === 'attack-resolved');
+
+    if (unsupportedEvent?.kind === 'attack-resolved' && supportedEvent?.kind === 'attack-resolved') {
+      expect(supportedEvent.defenderScore - unsupportedEvent.defenderScore).toBe(2);
+    } else {
+      throw new Error('attack-resolved event missing');
+    }
+  });
+
+  it('out-of-command units take a combat penalty', () => {
+    const isolated = u({ id: 'isolated', side: 'french', position: { x: 0, y: 0 } });
+    const commanded = u({ id: 'commanded', side: 'french', position: { x: 0, y: 0 } });
+    const commander = u({ id: 'commander', side: 'french', position: { x: 0, y: 2 } });
+    const d = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 }, moraleRevealed: true });
+
+    const isolatedEvent = resolveAttack(isolated, d, [isolated, d], [])
+      .events.find(e => e.kind === 'attack-resolved');
+    const commandedEvent = resolveAttack(commanded, d, [commanded, commander, d], [])
+      .events.find(e => e.kind === 'attack-resolved');
+
+    if (isolatedEvent?.kind === 'attack-resolved' && commandedEvent?.kind === 'attack-resolved') {
+      expect(commandedEvent.attackerScore - isolatedEvent.attackerScore).toBe(1);
+    } else {
+      throw new Error('attack-resolved event missing');
+    }
+  });
+
+  it('isolated attackers cannot gain cohesion from winning', () => {
+    const a = u({ id: 'a', side: 'french', position: { x: 0, y: 0 },
+                 strength: 4, morale: 3, cohesion: 0 });
+    const d = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 },
+                 strength: 1, morale: 1, cohesion: 0 });
+
+    const { updatedUnits, events } = resolveAttack(a, d, [a, d], []);
+
+    expect(updatedUnits.find(unit => unit.id === 'a')?.cohesion).toBe(0);
+    expect(events).not.toContainEqual(expect.objectContaining({
+      kind: 'cohesion-changed',
+      unitId: 'a',
+      reason: 'won-attack',
+    }));
+  });
+
+  it('updates cohesion after decisive wins, losses, damage, and nearby eliminations', () => {
+    const a = u({ id: 'a', side: 'french', position: { x: 0, y: 0 },
+                 strength: 4, morale: 3, cohesion: 0 });
+    const d = u({ id: 'd', side: 'austrian', position: { x: 1, y: 0 },
+                 strength: 1, morale: 1, cohesion: 0 });
+    const adjacentFriend = u({ id: 'd-friend', side: 'austrian', position: { x: 1, y: 1 },
+                              strength: 4, morale: 2, cohesion: 0 });
+    const attackerFriend = u({ id: 'a-friend', side: 'french', position: { x: 0, y: 2 },
+                               strength: 4, morale: 2, cohesion: 0 });
+
+    const { updatedUnits, events } = resolveAttack(a, d, [a, attackerFriend, d, adjacentFriend], []);
+
+    expect(updatedUnits.find(unit => unit.id === 'a')?.cohesion).toBe(1);
+    expect(updatedUnits.find(unit => unit.id === 'd-friend')?.cohesion).toBe(-1);
+    expect(events).toContainEqual(expect.objectContaining({
+      kind: 'cohesion-changed',
+      unitId: 'a',
+      from: 0,
+      to: 1,
+      reason: 'won-attack',
+    }));
+    expect(events).toContainEqual(expect.objectContaining({
+      kind: 'cohesion-changed',
+      unitId: 'd-friend',
+      from: 0,
+      to: -1,
+      reason: 'nearby-friendly-eliminated',
+    }));
+  });
 });

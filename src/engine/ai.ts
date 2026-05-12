@@ -59,7 +59,10 @@ export function runAiTurn(
             { tiles: scenario.tiles, grid: scenario.grid });
           s = r.state; events.push(...r.events);
         } else if (a.kind === 'attack') {
-          const r = attack(s, a.unitId, a.targetId);
+          const r = attack(s, a.unitId, a.targetId, {
+            tiles: scenario.tiles,
+            grid: scenario.grid,
+          });
           s = r.state; events.push(...r.events);
         } else if (a.kind === 'change-formation') {
           const r = changeFormation(s, a.unitId, a.to);
@@ -98,7 +101,10 @@ export function runAiTurn(
       if (difficulty === 'easy') {
         // Easy: attack the first enemy in range. No preview math, no skip-if-bad.
         try {
-          const r = attack(s, cur.id, attackableEnemies[0].id);
+          const r = attack(s, cur.id, attackableEnemies[0].id, {
+            tiles: scenario.tiles,
+            grid: scenario.grid,
+          });
           s = r.state; events.push(...r.events);
           continue;
         } catch { /* skip */ }
@@ -118,7 +124,10 @@ export function runAiTurn(
         const skipThreshold = difficulty === 'hard' ? 0 : -1;
         if (bestTarget && bestGap >= skipThreshold) {
           try {
-            const r = attack(s, cur.id, bestTarget.id);
+            const r = attack(s, cur.id, bestTarget.id, {
+              tiles: scenario.tiles,
+              grid: scenario.grid,
+            });
             s = r.state; events.push(...r.events);
             continue;
           } catch { /* skip */ }

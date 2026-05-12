@@ -55,6 +55,31 @@ export const CAMPAIGN_BOARD_SKINS: Record<CampaignSkinId, CampaignBoardSkin> = {
       inactiveStroke: '#6f5c3f',
     },
   },
+  'peninsular-war-1808': {
+    id: 'peninsular-war-1808',
+    boardTexture: parchmentTexture,
+    screenTexture: parchmentTexture,
+    terrainTextures: {
+      plain: plainTexture,
+      forest: forestTexture,
+      town: townTexture,
+      hill: hillTexture,
+      road: roadTexture,
+      river: riverTexture,
+      bridge: bridgeTexture,
+      marsh: marshTexture,
+    },
+    gridColor: '#4a371f',
+    gridIntersectionColor: '#5c4426',
+    borderColor: '#55381d',
+    paperTint: '#d3b273',
+    counter: {
+      bevel: '#f7e5b2',
+      shadow: '#1a1208',
+      highlight: '#d4a017',
+      inactiveStroke: '#6f5c3f',
+    },
+  },
 };
 
 export function getCampaignBoardSkin(campaignId: GameState['campaignId']): CampaignBoardSkin {

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { campaignScenarios } from '../../src/scenarios';
+import { allScenarios } from '../../src/scenarios';
 import { inBounds } from '../../src/engine/grid';
 
 describe('scenario validation', () => {
-  for (const s of campaignScenarios) {
+  for (const s of allScenarios) {
     describe(s.id, () => {
       it('all units in bounds', () => {
         for (const u of s.units) {

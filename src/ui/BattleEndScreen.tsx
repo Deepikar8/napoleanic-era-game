@@ -35,6 +35,15 @@ export function BattleEndScreen() {
           </Panel>
         )}
 
+        {scenario.lesson && (
+          <Panel title="Strategy debrief">
+            <div className="text-sm leading-relaxed text-left space-y-2">
+              <p><strong>{scenario.lesson.principle}</strong></p>
+              <p>{scenario.lesson.after}</p>
+            </div>
+          </Panel>
+        )}
+
         <Panel title="Battle summary">
           <div className="text-sm space-y-1">
             <div className="flex justify-between"><span>Battle</span><span className="font-semibold">{scenario.title}</span></div>

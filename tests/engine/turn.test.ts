@@ -58,6 +58,53 @@ describe('turn manager', () => {
     expect(r.events.some(e => e.kind === 'attack-resolved')).toBe(true);
   });
 
+  it('retreats a repulsed defender into an open tile away from the attacker', () => {
+    const retreatScenario: Scenario = {
+      ...trivialScenario,
+      units: [
+        u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 }, morale: 3 }),
+        u({ id: 'au1', side: 'austrian', position: { x: 2, y: 1 }, morale: 1, moraleRevealed: true }),
+      ],
+    };
+    const state = beginBattle(retreatScenario);
+    const r = attack(state, 'fr1', 'au1', {
+      tiles: retreatScenario.tiles,
+      grid: retreatScenario.grid,
+    });
+
+    expect(r.state.units.find(unit => unit.id === 'au1')?.position).toEqual({ x: 3, y: 1 });
+    expect(r.events).toContainEqual(expect.objectContaining({
+      kind: 'unit-retreated',
+      unitId: 'au1',
+      from: { x: 2, y: 1 },
+      to: { x: 3, y: 1 },
+    }));
+  });
+
+  it('routs a shattered unit when retreat is blocked', () => {
+    const trappedScenario: Scenario = {
+      ...trivialScenario,
+      units: [
+        u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 }, morale: 3 }),
+        u({ id: 'au1', side: 'austrian', position: { x: 2, y: 1 },
+           morale: 1, moraleRevealed: true, cohesion: -2 }),
+        u({ id: 'au-block', side: 'austrian', position: { x: 3, y: 1 } }),
+      ],
+    };
+    const state = beginBattle(trappedScenario);
+    const r = attack(state, 'fr1', 'au1', {
+      tiles: trappedScenario.tiles,
+      grid: trappedScenario.grid,
+    });
+
+    expect(r.state.units.find(unit => unit.id === 'au1')).toBeUndefined();
+    expect(r.events).toContainEqual(expect.objectContaining({
+      kind: 'unit-routed',
+      unitId: 'au1',
+      reason: 'blocked-retreat',
+    }));
+  });
+
   it('attack non-adjacent throws', () => {
     const farScenario: Scenario = {
       ...trivialScenario,
@@ -99,6 +146,29 @@ describe('turn manager', () => {
     expect(moved.units.find(u => u.id === 'fr1')!.hasMoved).toBe(true);
     const turn2 = endTurn(endTurn(moved).state).state;
     expect(turn2.units.find(u => u.id === 'fr1')!.hasMoved).toBeFalsy();
+  });
+
+  it('recovers shaken units that start their turn in command', () => {
+    const commandScenario: Scenario = {
+      ...trivialScenario,
+      units: [
+        u({ id: 'fr1', side: 'french', position: { x: 1, y: 1 }, cohesion: -1 }),
+        u({ id: 'fr2', side: 'french', position: { x: 1, y: 3 } }),
+        u({ id: 'au1', side: 'austrian', position: { x: 6, y: 6 } }),
+      ],
+    };
+    let s = beginBattle(commandScenario);
+    s = endTurn(s).state;
+    const r = endTurn(s);
+
+    expect(r.state.units.find(unit => unit.id === 'fr1')?.cohesion).toBe(0);
+    expect(r.events).toContainEqual(expect.objectContaining({
+      kind: 'cohesion-changed',
+      unitId: 'fr1',
+      from: -1,
+      to: 0,
+      reason: 'command-recovery',
+    }));
   });
 
   it('changeFormation changes formation and sets hasActed', () => {

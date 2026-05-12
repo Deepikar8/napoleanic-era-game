@@ -37,7 +37,7 @@ export function HelpOverlay() {
           <li>Target is on the other team. (Austria + Russia count as one team — they can't attack each other.)</li>
         </ul>
 
-        <p className="text-sm mt-3">Combat compares <code>strength + terrain + flank + formation + morale</code> on each side. Larger gap is better for the higher side.</p>
+        <p className="text-sm mt-3">Combat compares <code>strength + terrain + flank + formation + morale + cohesion + command</code> on each side. Larger gap is better for the higher side.</p>
         <table className="text-sm border w-full mt-2 mb-3">
           <thead className="bg-parchmentDark"><tr><th className="p-1 text-left">Result gap</th><th className="p-1 text-left">Outcome</th></tr></thead>
           <tbody>
@@ -101,6 +101,11 @@ export function HelpOverlay() {
           <li>★★★ <strong>Elite</strong> (3) — Old Guard, hand-picked, almost never breaks</li>
         </ul>
         <p className="text-sm mt-2">Morale adds straight to the combat score, so a 4-strength elite (4+3=7) is much stronger than a 4-strength conscript (4+1=5) that looks the same on the board. <strong>You always see your own troops' morale</strong> (you're the commander; you picked them). The <strong>enemy's morale is hidden</strong> until the first time you attack them — your first attack of a battle is always partly a probe to see what you're really up against.</p>
+
+        <h3 className="font-bold mt-3">Cohesion &amp; support</h3>
+        <p className="text-sm">Base morale stays the same, but battle cohesion shifts between −2 and +2. Winning a decisive attack can steady a unit; taking damage or seeing nearby friends eliminated can shake it. Adjacent friendly units provide +1 support in combat, so isolated units are easier to break.</p>
+        <h3 className="font-bold mt-3">Command &amp; rout</h3>
+        <p className="text-sm">A unit is in command when a friendly unit is within 2 tiles. Out-of-command units suffer −1 in combat and cannot steady themselves from a win. Shaken units in command recover +1 cohesion when their turn starts. Units forced to retreat need an open tile away from the attacker; trapped units lose cohesion, and already-broken units rout.</p>
 
         <h3 className="font-bold mt-3">Solo mode &amp; AI difficulty</h3>
         <p className="text-sm">When <strong>Play solo</strong> is on (set on the splash), the computer plays the Coalition during their turns. Three difficulty levels:</p>

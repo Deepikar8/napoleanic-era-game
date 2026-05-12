@@ -39,9 +39,10 @@ export function UnitPanel({ unit }: { unit: Unit | null }) {
         <Row label="Formation" value={unit.formation} />
         <Row label="Strength" value={`${unit.strength} / 4`} />
         <Row label="Morale" value={moraleDisplay(unit)} />
+        <Row label="Cohesion" value={`${(unit.cohesion ?? 0) >= 0 ? '+' : ''}${unit.cohesion ?? 0}`} />
       </div>
       <p className="mt-2 text-xs italic opacity-70">
-        Morale = how steady the troops are. Higher = harder to break. You see your own troops' morale always; the enemy's is hidden until you attack them.
+        Morale is base quality. Cohesion shifts during battle from wins, losses, damage, and nearby support.
       </p>
     </Panel>
   );

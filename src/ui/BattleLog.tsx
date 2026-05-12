@@ -17,7 +17,9 @@ const formatEvent = (e: BattleEvent): string => {
     case 'formation-changed':  return `${e.unitId}: ${e.from} → ${e.to}`;
     case 'attack-resolved':    return `Attack ${e.attackerId} → ${e.defenderId}: ${e.result} (${e.attackerScore} vs ${e.defenderScore})`;
     case 'morale-revealed':    return `${e.unitId}: ${moraleFlavour(e.morale)}`;
+    case 'cohesion-changed':   return `${e.unitId}: cohesion ${e.from > 0 ? '+' : ''}${e.from} → ${e.to > 0 ? '+' : ''}${e.to}`;
     case 'unit-eliminated':    return `${e.unitId} eliminated`;
+    case 'unit-routed':        return `${e.unitId} routed`;
     case 'unit-retreated':     return `${e.unitId} retreated`;
     case 'trigger-fired':      return e.flavour ?? `Event: ${e.triggerId}`;
     case 'victory':            return `Victory: ${e.side} (${e.reason})`;

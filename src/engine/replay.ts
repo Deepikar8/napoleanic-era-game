@@ -1,5 +1,5 @@
 import type {
-  GameState, Scenario, BattleEvent, Unit, Pos, Strength,
+  Cohesion, GameState, Scenario, BattleEvent, Unit, Pos, Strength,
 } from './types';
 import { beginBattle } from './turn';
 import { COALITION } from './sides';
@@ -15,6 +15,9 @@ const facingFromMove = (from: Pos, to: Pos, fallback: Unit['facing']): Unit['fac
 
 const clampStrength = (s: number): Strength =>
   (s < 1 ? 1 : s > 4 ? 4 : s) as Strength;
+
+const clampCohesion = (s: number): Cohesion =>
+  (s < -2 ? -2 : s > 2 ? 2 : s) as Cohesion;
 
 function applyEvent(state: GameState, e: BattleEvent): GameState {
   switch (e.kind) {
@@ -59,7 +62,15 @@ function applyEvent(state: GameState, e: BattleEvent): GameState {
         ...state,
         units: state.units.map(u => u.id === e.unitId ? { ...u, moraleRevealed: true } : u),
       };
+    case 'cohesion-changed':
+      return {
+        ...state,
+        units: state.units.map(u => u.id === e.unitId
+          ? { ...u, cohesion: clampCohesion(e.to) } : u),
+      };
     case 'unit-eliminated':
+      return { ...state, units: state.units.filter(u => u.id !== e.unitId) };
+    case 'unit-routed':
       return { ...state, units: state.units.filter(u => u.id !== e.unitId) };
     case 'unit-retreated':
       return {
@@ -129,7 +140,9 @@ export function eventUnitIds(e: BattleEvent): string[] {
     case 'unit-moved':
     case 'formation-changed':
     case 'morale-revealed':
+    case 'cohesion-changed':
     case 'unit-eliminated':
+    case 'unit-routed':
     case 'unit-retreated':
       return [e.unitId];
     case 'attack-resolved':

@@ -1,5 +1,5 @@
 import type {
-  GameState, Unit, Scenario, BattleEvent, Pos, Side, Formation, Tile,
+  GameState, Unit, Scenario, BattleEvent, Pos, Side, Formation, Tile, Cohesion,
 } from './types';
 import { posEq } from './types';
 import { chebyshev } from './grid';
@@ -8,6 +8,7 @@ import { resolveAttack } from './combat';
 import { applyPatch } from './patch';
 import { canAttackUnit } from './attack-range';
 import { COALITION, isOnActiveSide, sameTeam } from './sides';
+import { isInCommand } from './command';
 
 function nextSide(current: Side, units: Unit[]): Side {
   if (current === 'french') {
@@ -46,10 +47,10 @@ export function beginBattle(
 
   return {
     schemaVersion: 1,
-    campaignId: 'ulm-austerlitz-1805',
+    campaignId: s.campaignId ?? 'ulm-austerlitz-1805',
     scenarioIndex: 0,
     scenarioId: s.id,
-    units: s.units.map(u => ({ ...u })),
+    units: s.units.map(u => ({ ...u, cohesion: u.cohesion ?? 0 })),
     currentSide: 'french',
     turn: 1,
     phase: 'orders',
@@ -130,6 +131,7 @@ export function attack(
   state: GameState,
   attackerId: string,
   defenderId: string,
+  ctx?: { tiles: Tile[]; grid: { width: number; height: number } },
 ): { state: GameState; events: BattleEvent[] } {
   const a = state.units.find(u => u.id === attackerId);
   const d = state.units.find(u => u.id === defenderId);
@@ -140,7 +142,13 @@ export function attack(
   if (a.hasActed) throw new Error(`${attackerId} already acted this turn`);
   if (!canAttackUnit(a, d)) throw new Error(`Target out of attack range`);
 
-  const { updatedUnits, events: combatEvents } = resolveAttack(a, d, state.units, []);
+  const { updatedUnits, events: combatEvents } = resolveAttack(
+    a,
+    d,
+    state.units,
+    ctx?.tiles ?? [],
+    ctx?.grid,
+  );
   const finalUnits = updatedUnits.map(u =>
     u.id === attackerId ? { ...u, hasActed: true } : u,
   );
@@ -177,11 +185,25 @@ export function endTurn(state: GameState): { state: GameState; events: BattleEve
   const ns = nextSide(state.currentSide, state.units);
   const isNewRound = ns === 'french';
   const newTurn = isNewRound ? state.turn + 1 : state.turn;
-  const cleared = state.units.map(u => {
+  let cleared = state.units.map(u => {
     const reset = ns === 'french' ? u.side === 'french' : COALITION.includes(u.side);
     return reset ? { ...u, hasMoved: false as const, hasActed: false as const } : u;
   });
   events.push({ kind: 'turn-started', turn: newTurn, side: ns });
+  cleared = cleared.map(u => {
+    const reset = ns === 'french' ? u.side === 'french' : COALITION.includes(u.side);
+    const cohesion = u.cohesion ?? 0;
+    if (!reset || cohesion >= 0 || !isInCommand(u, cleared)) return u;
+    const nextCohesion = (cohesion + 1) as Cohesion;
+    events.push({
+      kind: 'cohesion-changed',
+      unitId: u.id,
+      from: cohesion,
+      to: nextCohesion,
+      reason: 'command-recovery',
+    });
+    return { ...u, cohesion: nextCohesion };
+  });
   return {
     state: {
       ...state,

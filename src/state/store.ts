@@ -1,21 +1,30 @@
 import { create } from 'zustand';
-import type { GameState, Pos, Formation, Scenario } from '../engine/types';
+import type { GameState, Pos, Formation, Scenario, Unit } from '../engine/types';
 import { beginBattle, moveUnit, attack, changeFormation, endTurn, checkVictory } from '../engine';
 import { runAiTurn, type AiDifficulty } from '../engine/ai';
 import { replayUpTo, eventUnitIds } from '../engine/replay';
 import { applyScenarioTriggers } from '../engine/triggers';
 import { localStorageBackend, newRunId } from './save';
-import { campaignScenarios } from '../scenarios';
+import { allScenarios, getCampaignScenarios } from '../scenarios';
 import {
   playTurnDrum, playFifeFlourish, setMuted as soundSetMuted,
   playAttackThump, playEliminationGong, playRetreatSlide,
+  playRoutBreak, playCohesionRise, playCohesionFall, playArtilleryBoom,
 } from '../sound';
 import type { BattleEvent } from '../engine/types';
+import { isArtilleryType } from '../engine/attack-range';
 
-const playEventSound = (e: BattleEvent) => {
+const playEventSound = (e: BattleEvent, units: Pick<Unit, 'id' | 'type'>[] = []) => {
   switch (e.kind) {
-    case 'attack-resolved':  playAttackThump(); break;
+    case 'attack-resolved': {
+      const attacker = units.find(u => u.id === e.attackerId);
+      if (attacker && isArtilleryType(attacker.type)) playArtilleryBoom();
+      else playAttackThump();
+      break;
+    }
+    case 'cohesion-changed': e.to > e.from ? playCohesionRise() : playCohesionFall(); break;
     case 'unit-eliminated':  playEliminationGong(); break;
+    case 'unit-routed':      playRoutBreak(); break;
     case 'unit-retreated':   playRetreatSlide(); break;
     default: /* silent */ break;
   }
@@ -38,7 +47,9 @@ const captionForEvent = (e: BattleEvent, units: { id: string; name?: string }[])
     case 'formation-changed': return `${unitName(e.unitId, units)} formed ${e.to}`;
     case 'attack-resolved':   return `${unitName(e.attackerId, units)} attacks ${unitName(e.defenderId, units)} — ${e.result}`;
     case 'morale-revealed':   return `${unitName(e.unitId, units)}: ${moraleFlavour(e.morale)}`;
+    case 'cohesion-changed':  return `${unitName(e.unitId, units)} cohesion ${e.from > 0 ? '+' : ''}${e.from} to ${e.to > 0 ? '+' : ''}${e.to}`;
     case 'unit-eliminated':   return `${unitName(e.unitId, units)} eliminated`;
+    case 'unit-routed':       return `${unitName(e.unitId, units)} routed`;
     case 'unit-retreated':    return `${unitName(e.unitId, units)} retreats`;
     case 'trigger-fired':     return e.flavour ?? null;
     case 'turn-started':
@@ -107,6 +118,8 @@ export const useGame = create<Store>((set, get) => ({
 
   startNewRun(scenario) {
     const initial = beginBattle(scenario);
+    const campaignScenarios = getCampaignScenarios(initial.campaignId);
+    initial.scenarioIndex = Math.max(0, campaignScenarios.findIndex(s => s.id === scenario.id));
     set({
       runId: newRunId(), state: initial, scenario,
       history: [initial], screen: 'dispatch',
@@ -150,8 +163,11 @@ export const useGame = create<Store>((set, get) => ({
     const { state, scenario, selectedUnitId, history } = get();
     if (!state || !scenario || !selectedUnitId) return;
     try {
-      const r = attack(state, selectedUnitId, defenderId);
-      for (const ev of r.events) playEventSound(ev);
+      const r = attack(state, selectedUnitId, defenderId, {
+        tiles: scenario.tiles,
+        grid: scenario.grid,
+      });
+      for (const ev of r.events) playEventSound(ev, state.units);
       const t = applyScenarioTriggers(r.state, scenario);
       const v = checkVictory(t.state, scenario.victory);
       set({
@@ -259,7 +275,7 @@ export const useGame = create<Store>((set, get) => ({
 
         const ev = fullLog[i];
         const intermediate = replayUpTo(
-          aiScenario, stateBeforeAi.decisionsTaken, fullLog, i, campaignScenarios,
+          aiScenario, stateBeforeAi.decisionsTaken, fullLog, i, allScenarios,
         );
         const caption = captionForEvent(ev, intermediate.units);
         set({
@@ -267,7 +283,7 @@ export const useGame = create<Store>((set, get) => ({
           animatingHighlightIds: eventUnitIds(ev),
           animatingMessage: caption ?? (aiActed ? 'Coalition is moving…' : stoodFirmMsg),
         });
-        playEventSound(ev);
+        playEventSound(ev, intermediate.units);
 
         if (i >= endIdx) {
           // Hold the last frame a beat longer so the caption is readable.
@@ -324,6 +340,7 @@ export const useGame = create<Store>((set, get) => ({
     };
     const allOutcomes = [...state.outcomes, finishedOutcome];
 
+    const campaignScenarios = getCampaignScenarios(state.campaignId);
     const next = campaignScenarios[idx + 1];
     if (!next) {
       set({

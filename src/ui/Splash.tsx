@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGame } from '../state/store';
 import { localStorageBackend, type SavedRun } from '../state/save';
 import { Button } from './shared';
-import { campaignScenarios, getScenarioById } from '../scenarios';
+import { campaigns, campaignScenarios, getScenarioById } from '../scenarios';
 
 export function Splash() {
   const {
@@ -23,10 +23,17 @@ export function Splash() {
   return (
     <main className="min-h-full flex items-center justify-center bg-parchment text-ink">
       <div className="max-w-xl w-full text-center px-6">
-        <h1 className="font-serif text-5xl mb-1">1805</h1>
-        <p className="font-serif text-xl italic mb-8 opacity-80">A Napoleonic Campaign</p>
+        <h1 className="font-serif text-5xl mb-1">Napoleonic Campaigns</h1>
+        <p className="font-serif text-xl italic mb-8 opacity-80">Play battles as strategy lessons.</p>
         <div className="space-y-3">
-          <div><Button onClick={() => startNewRun(campaignScenarios[0])}>New Campaign</Button></div>
+          {campaigns.map(campaign => (
+            <div key={campaign.id}>
+              <Button onClick={() => startNewRun(campaign.scenarios[0])}>
+                New: {campaign.title}
+              </Button>
+              <p className="mt-1 text-xs opacity-60">{campaign.theme}</p>
+            </div>
+          ))}
           {runs.length > 0 && (() => {
             const last = runs[0];
             const sc = getScenarioById(last.state.scenarioId);

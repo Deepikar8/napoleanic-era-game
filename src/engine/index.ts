@@ -11,3 +11,4 @@ export * from './replay';
 export * from './sides';
 export * from './triggers';
 export * from './attack-range';
+export * from './command';

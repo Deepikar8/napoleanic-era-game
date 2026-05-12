@@ -1,6 +1,7 @@
 // All engine types. Pure data, JSON-safe.
 
-export type Side = 'french' | 'austrian' | 'russian';
+export type Side = 'french' | 'austrian' | 'russian' | 'spanish' | 'british' | 'portuguese';
+export type CampaignId = 'ulm-austerlitz-1805' | 'peninsular-war-1808';
 
 export type UnitType =
   | 'line-infantry' | 'light-infantry' | 'grenadier'
@@ -17,6 +18,7 @@ export type TerrainKind =
 
 export type Strength = 1 | 2 | 3 | 4;
 export type Morale = 1 | 2 | 3;
+export type Cohesion = -2 | -1 | 0 | 1 | 2;
 
 export interface Pos { x: number; y: number; }
 export const posEq = (a: Pos, b: Pos) => a.x === b.x && a.y === b.y;
@@ -32,6 +34,7 @@ export interface Unit {
   formation: Formation;
   strength: Strength;
   morale: Morale;
+  cohesion?: Cohesion;             // temporary battle-state; missing older saves/scenarios migrate to 0
   moraleRevealed?: boolean;     // engine sets true after first attack on this unit
   hasMoved?: boolean;           // reset at start-of-turn
   hasActed?: boolean;           // reset at start-of-turn
@@ -106,6 +109,7 @@ export interface ScenarioPatch {
 
 export interface Scenario {
   id: string;
+  campaignId?: CampaignId;
   title: string;
   briefingMd: string;          // filename (without .md) under src/dispatches
   grid: { width: number; height: number };
@@ -119,10 +123,32 @@ export interface Scenario {
   /** Short tactical guidance shown on the dispatch screen, separate from the
    *  in-character briefing prose. One or two sentences, plain language. */
   tacticalHint?: string;
+  lesson?: ScenarioLesson;
   /** Mid-battle scenario events that fire when a condition is met (e.g.,
    *  reinforcements arrive when a tile is taken). Distinct from AiScript
    *  triggers, which only emit AI actions. These apply patches to scenario data. */
   scenarioTriggers?: ScenarioTrigger[];
+}
+
+export interface ScenarioLesson {
+  principle: string;
+  before: string;
+  during: string;
+  after: string;
+}
+
+export interface Campaign {
+  id: CampaignId;
+  title: string;
+  subtitle: string;
+  theme: string;
+  thesis: string;
+  scenarios: Scenario[];
+  endText: {
+    triumph: { title: string; body: string };
+    partial: { title: string; body: string };
+    defeat: { title: string; body: string };
+  };
 }
 
 // Events emitted by every state-changing engine call. Cumulative array forms the replay log.
@@ -136,7 +162,11 @@ export type BattleEvent =
       attackerLoss: number; defenderLoss: number;
       attackerScore: number; defenderScore: number; }
   | { kind: 'morale-revealed'; unitId: string; morale: Morale }
+  | { kind: 'cohesion-changed'; unitId: string; from: Cohesion; to: Cohesion;
+      reason: 'won-attack' | 'held-firm' | 'took-damage' | 'nearby-friendly-eliminated'
+            | 'blocked-retreat' | 'command-recovery' }
   | { kind: 'unit-eliminated'; unitId: string }
+  | { kind: 'unit-routed'; unitId: string; reason: 'blocked-retreat' | 'cohesion-collapse' }
   | { kind: 'unit-retreated'; unitId: string; from: Pos; to: Pos }
   | { kind: 'turn-ended'; turn: number; side: Side }
   | { kind: 'trigger-fired'; triggerId: string; patch: ScenarioPatch; flavour?: string }
@@ -146,7 +176,7 @@ export type GamePhase = 'orders' | 'end-of-turn';
 
 export interface GameState {
   schemaVersion: 1;
-  campaignId: 'ulm-austerlitz-1805';
+  campaignId: CampaignId;
   scenarioIndex: number;
   scenarioId: string;
   units: Unit[];

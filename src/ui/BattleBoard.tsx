@@ -7,6 +7,7 @@ import { isOnActiveSide, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
 import { getCampaignBoardSkin } from '../art/campaign-skins';
 import { getUnitRasterIcon, UNIT_COUNTER_ICON_LAYOUT } from '../art/unit-art';
+import { isInCommand } from '../engine/command';
 
 interface ObjectiveMarker { pos: Pos; kind: 'capture' | 'hold'; met: boolean; }
 
@@ -48,14 +49,25 @@ const COUNTER_FILL: Record<Unit['side'], string> = {
   french: 'url(#counter-french)',
   austrian: 'url(#counter-austrian)',
   russian: 'url(#counter-russian)',
+  spanish: 'url(#counter-spanish)',
+  british: 'url(#counter-british)',
+  portuguese: 'url(#counter-portuguese)',
 };
 const SIDE_TEXT: Record<Unit['side'], string> = {
-  french: '#ffffff', austrian: '#2a2018', russian: '#ffffff',
+  french: '#ffffff',
+  austrian: '#2a2018',
+  russian: '#ffffff',
+  spanish: '#2a2018',
+  british: '#ffffff',
+  portuguese: '#ffffff',
 };
 const SIDE_ICON_DETAIL: Record<Unit['side'], string> = {
   french: '#2f5f9f',
   austrian: '#f5edd6',
   russian: '#365f3d',
+  spanish: '#f5edd6',
+  british: '#8f2b1e',
+  portuguese: '#315f42',
 };
 
 const TYPE_CODE: Record<Unit['type'], string> = {
@@ -110,9 +122,9 @@ export interface BattleBoardProps {
 
 interface CombatEffect {
   id: number;
-  kind: 'damage' | 'eliminated' | 'morale-reveal';
+  kind: 'damage' | 'eliminated' | 'morale-reveal' | 'cohesion';
   pos: Pos;
-  /** Damage: loss amount. Morale-reveal: morale 1-3. */
+  /** Damage: loss amount. Morale-reveal: morale 1-3. Cohesion: delta. */
   detail?: number;
 }
 
@@ -153,6 +165,13 @@ export function BattleBoard(p: BattleBoardProps) {
         newFx.push({
           id: ++fxIdRef.current,
           kind: 'morale-reveal', pos: u.position, detail: u.morale,
+        });
+      }
+      if ((prevU.cohesion ?? 0) !== (u.cohesion ?? 0)) {
+        newFx.push({
+          id: ++fxIdRef.current,
+          kind: 'cohesion', pos: u.position,
+          detail: (u.cohesion ?? 0) - (prevU.cohesion ?? 0),
         });
       }
     }
@@ -349,6 +368,21 @@ export function BattleBoard(p: BattleBoardProps) {
           <stop offset="58%" stopColor="#4a7a4a" />
           <stop offset="100%" stopColor="#2f5735" />
         </linearGradient>
+        <linearGradient id="counter-spanish" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#fff3cf" />
+          <stop offset="60%" stopColor="#e8d39b" />
+          <stop offset="100%" stopColor="#c6a45d" />
+        </linearGradient>
+        <linearGradient id="counter-british" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#b74333" />
+          <stop offset="58%" stopColor="#8f2b1e" />
+          <stop offset="100%" stopColor="#5f1d16" />
+        </linearGradient>
+        <linearGradient id="counter-portuguese" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#5c8a5b" />
+          <stop offset="58%" stopColor="#315f42" />
+          <stop offset="100%" stopColor="#203f2d" />
+        </linearGradient>
 
         {terrainTextureEntries.map(([kind, href]) => (
           <pattern key={kind} id={`terrain-${kind}`} patternUnits="userSpaceOnUse" width="48" height="48">
@@ -523,7 +557,7 @@ export function BattleBoard(p: BattleBoardProps) {
               width={cellSize - 10.4} height={(cellSize - 10.4) / 2}
               rx="3"
               fill="#fff8d8"
-              opacity={u.side === 'austrian' ? 0.22 : 0.12}
+              opacity={u.side === 'austrian' || u.side === 'spanish' ? 0.22 : 0.12}
               pointerEvents="none"
             />
             <rect
@@ -619,6 +653,59 @@ export function BattleBoard(p: BattleBoardProps) {
                 />
               </g>
             )}
+            {(u.cohesion ?? 0) !== 0 && (
+              <g
+                role="img"
+                aria-label={`Cohesion ${(u.cohesion ?? 0) > 0 ? '+' : ''}${u.cohesion ?? 0}`}
+                pointerEvents="none"
+              >
+                <rect
+                  x={3}
+                  y={cellSize - 22}
+                  width={16}
+                  height={12}
+                  rx={2}
+                  fill={(u.cohesion ?? 0) > 0 ? '#2f6f3e' : '#8f2b1e'}
+                  stroke="#f7ecd0"
+                  strokeWidth={0.75}
+                />
+                <text
+                  x={11}
+                  y={cellSize - 13}
+                  textAnchor="middle"
+                  fontSize="7.5"
+                  fontWeight="900"
+                  fill="#fff7df"
+                  stroke="#1a120a"
+                  strokeWidth={0.35}
+                  paintOrder="stroke"
+                >
+                  {(u.cohesion ?? 0) > 0 ? '+' : ''}{u.cohesion ?? 0}
+                </text>
+              </g>
+            )}
+            {!isInCommand(u, state.units) && (
+              <g role="img" aria-label="Out of command" pointerEvents="none">
+                <circle
+                  cx={cellSize - 9}
+                  cy={cellSize / 2}
+                  r={4.5}
+                  fill="#8f2b1e"
+                  stroke="#f7ecd0"
+                  strokeWidth={0.7}
+                />
+                <text
+                  x={cellSize - 9}
+                  y={cellSize / 2 + 2.8}
+                  textAnchor="middle"
+                  fontSize="8"
+                  fontWeight="900"
+                  fill="#fff7df"
+                >
+                  !
+                </text>
+              </g>
+            )}
             {p.showDetails && (
               <>
                 {/* Facing triangle on the front edge */}
@@ -682,6 +769,37 @@ export function BattleBoard(p: BattleBoardProps) {
             </g>
           );
         }
+        if (fx.kind === 'cohesion') {
+          const delta = fx.detail ?? 0;
+          return (
+            <g key={fx.id} pointerEvents="none" className="animate-cohesion-shift">
+              <rect
+                x={centerX - 19}
+                y={cy + 1}
+                width={38}
+                height={13}
+                rx={3}
+                fill={delta > 0 ? '#2f6f3e' : '#8f2b1e'}
+                stroke="#f7ecd0"
+                strokeWidth={0.8}
+                opacity={0.94}
+              />
+              <text
+                x={centerX}
+                y={cy + 11}
+                textAnchor="middle"
+                fontSize="8"
+                fontWeight="900"
+                fill="#fff7df"
+                stroke="#1a120a"
+                strokeWidth={0.35}
+                paintOrder="stroke"
+              >
+                {delta > 0 ? '+' : ''}{delta} coh
+              </text>
+            </g>
+          );
+        }
         // morale-reveal
         return (
           <g key={fx.id} pointerEvents="none" className="animate-morale-reveal">
@@ -703,7 +821,7 @@ export function BattleBoard(p: BattleBoardProps) {
         const info = TERRAIN_INFO[ter];
         const occupant = state.units.find(u => posEq(u.position, tooltipPos));
         const tipW = 180;
-        const tipH = occupant ? 84 : 40;
+        const tipH = occupant ? 98 : 40;
         const placeAbove = tooltipPos.y > 0;
         const tx = Math.min(Math.max(tooltipPos.x * cellSize + cellSize / 2 - tipW / 2, 2), w - tipW - 2);
         const ty = placeAbove
@@ -735,6 +853,9 @@ export function BattleBoard(p: BattleBoardProps) {
                 </text>
                 <text x={tx + 8} y={ty + 78} fontSize="9" fill="#f5f0e6">
                   Strength {occupant.strength}/4 · Morale {moraleStr}
+                </text>
+                <text x={tx + 8} y={ty + 92} fontSize="9" fill="#f5f0e6">
+                  {isInCommand(occupant, state.units) ? 'In command' : 'Out of command'}
                 </text>
               </>
             )}

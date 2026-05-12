@@ -106,4 +106,29 @@ describe('BattleBoard', () => {
       expect(transformX + pathMaxX + strokeWidth / 2).toBeLessThanOrEqual(badgeRight);
     }
   });
+
+  it('shows cohesion markers directly on affected units', () => {
+    render(
+      <BattleBoard
+        scenario={scenario}
+        state={{
+          ...state,
+          units: state.units.map((unit, index) => {
+            if (index === 0) return { ...unit, cohesion: 1 };
+            if (index === 1) return { ...unit, cohesion: -1 };
+            return unit;
+          }),
+        }}
+        selectedUnitId={null}
+        hoveredEnemyId={null}
+        onSelectUnit={vi.fn()}
+        onMoveTo={vi.fn()}
+        onAttack={vi.fn()}
+        onHoverEnemy={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText('Cohesion +1')).toBeInTheDocument();
+    expect(screen.getByLabelText('Cohesion -1')).toBeInTheDocument();
+  });
 });

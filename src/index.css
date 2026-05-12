@@ -141,6 +141,19 @@ html { font-size: 16px; }
   transform-box: fill-box;
 }
 
+/* Cohesion shift — short, readable morale-state cue after combat. */
+@keyframes cohesion-shift {
+  0%   { transform: translateY(5px) scale(0.82); opacity: 0; }
+  18%  { transform: translateY(0) scale(1); opacity: 1; }
+  78%  { transform: translateY(-5px) scale(1); opacity: 1; }
+  100% { transform: translateY(-10px) scale(0.96); opacity: 0; }
+}
+.animate-cohesion-shift {
+  animation: cohesion-shift 1300ms ease-out forwards;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
 /* Respect prefers-reduced-motion (OS-level setting for users who get sick
    on motion / use assistive tech). Disable looping animations entirely;
    collapse one-shot ones to their end state instantly so behaviour is
@@ -150,7 +163,8 @@ html { font-size: 16px; }
   .animate-damage-flash,
   .animate-float-up,
   .animate-eliminate,
-  .animate-morale-reveal {
+  .animate-morale-reveal,
+  .animate-cohesion-shift {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }

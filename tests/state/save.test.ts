@@ -110,4 +110,28 @@ describe('save backend', () => {
     expect(loaded!.state.currentSide).toBe(s.currentSide);
     expect(loaded!.state.turn).toBe(s.turn);
   });
+
+  it('migrates older saved units without cohesion to neutral cohesion', () => {
+    const legacyState = {
+      ...sampleState(),
+      units: [{
+        id: 'fr1',
+        side: 'french',
+        type: 'line-infantry',
+        position: { x: 0, y: 0 },
+        facing: 'N',
+        formation: 'line',
+        strength: 4,
+        morale: 2,
+      }],
+    };
+    localStorage.setItem('napoleonic-save-legacy-cohesion', JSON.stringify({
+      runId: 'legacy-cohesion',
+      savedAt: 1,
+      state: legacyState,
+    }));
+
+    const loaded = localStorageBackend.load('legacy-cohesion');
+    expect(loaded?.state.units[0].cohesion).toBe(0);
+  });
 });

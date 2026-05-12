@@ -3,7 +3,13 @@
 
 import type { Side, Unit } from './types';
 
-export const COALITION: readonly Side[] = ['austrian', 'russian'] as const;
+export const COALITION: readonly Side[] = [
+  'austrian',
+  'russian',
+  'spanish',
+  'british',
+  'portuguese',
+] as const;
 
 /** Are both sides on the same team? Coalition partners count as one team. */
 export const sameTeam = (a: Side, b: Side): boolean =>

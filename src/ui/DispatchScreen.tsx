@@ -27,6 +27,15 @@ export function DispatchScreen() {
           <p className="text-sm leading-relaxed">{scenario.tacticalHint}</p>
         </Panel>
       )}
+      {scenario.lesson && (
+        <Panel title="Strategy lesson">
+          <div className="text-sm leading-relaxed space-y-2">
+            <p><strong>{scenario.lesson.principle}</strong></p>
+            <p>{scenario.lesson.before}</p>
+            <p className="italic opacity-80">{scenario.lesson.during}</p>
+          </div>
+        </Panel>
+      )}
       {decision && !decisionTaken && <DecisionPicker decision={decision} />}
       {(!decision || decisionTaken) && (
         <div className="mt-4 flex justify-end">
