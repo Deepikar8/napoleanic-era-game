@@ -1,9 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { allScenarios } from '../../src/scenarios';
+import { allScenarios, peninsularWarScenarios } from '../../src/scenarios';
 import { inBounds } from '../../src/engine/grid';
 import { COALITION } from '../../src/engine/sides';
 
 describe('scenario validation', () => {
+  it('keeps the Peninsular campaign at the intended six-battle strategy arc', () => {
+    expect(peninsularWarScenarios.map(s => s.id)).toEqual([
+      'bailen',
+      'somosierra',
+      'talavera',
+      'vimeiro',
+      'busaco',
+      'salamanca',
+    ]);
+    expect(peninsularWarScenarios.slice(3).every(s => s.playerSide === 'british')).toBe(true);
+  });
+
   for (const s of allScenarios) {
     describe(s.id, () => {
       it('all units in bounds', () => {

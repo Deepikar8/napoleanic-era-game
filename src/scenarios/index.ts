@@ -47,9 +47,9 @@ export const campaigns: Campaign[] = [
   {
     id: 'peninsular-war-1808',
     title: 'The Spanish Ulcer: Peninsular War',
-    subtitle: 'A strategy-learning campaign about overextension, terrain, coalition defense, and logistics.',
+    subtitle: 'A strategy-learning campaign about overextension, terrain, coalition defense, logistics, and exploitation.',
     theme: 'Tactical victories under strategic strain',
-    thesis: 'France can win battles in Spain, but the war punishes isolation, bad supply, and attacks that ignore terrain and local resistance.',
+    thesis: 'France can win battles in Spain, but the war punishes isolation, bad supply, and attacks that ignore terrain, coalition discipline, and the danger of overextension.',
     scenarios: peninsularWarScenarios,
     endText: {
       triumph: {
