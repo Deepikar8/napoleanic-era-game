@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGame } from './state/store';
-import { isOnActiveSide, sameTeam } from './engine/sides';
+import { isOnActiveSide, isOnPlayerTeam, playerSideForScenario, sameTeam } from './engine/sides';
 import { Splash } from './ui/Splash';
 import { CampaignMenu } from './ui/CampaignMenu';
 import { BattleEndScreen } from './ui/BattleEndScreen';
@@ -85,11 +85,12 @@ function BattleScreen() {
 
   if (!state || !scenario) return <Splash />;
 
+  const playerSide = playerSideForScenario(scenario.playerSide);
   const sideCanAct = (side: typeof state.currentSide) => isOnActiveSide(side, state.currentSide);
   const coalitionSides = new Set(scenario.units.filter(u => u.side !== 'french').map(u => u.side));
-  const sideLabel = state.currentSide === 'french'
-    ? 'french'
-    : (coalitionSides.size > 1 ? 'coalition' : state.currentSide);
+  const sideLabel = isOnActiveSide(state.currentSide, playerSide)
+    ? state.currentSide
+    : (state.currentSide === 'french' ? 'french' : (coalitionSides.size > 1 ? 'coalition' : state.currentSide));
   // Count units that *actually* still have an action available — has any legal
   // move target OR has an adjacent enemy it could attack. A unit that moved to
   // an empty square with no enemies in reach should not count, even though
@@ -113,7 +114,8 @@ function BattleScreen() {
   const selected = selectedUnitId ? state.units.find(u => u.id === selectedUnitId) ?? null : null;
   const hoveredEnemy = hoveredEnemyId ? state.units.find(u => u.id === hoveredEnemyId) ?? null : null;
   const v = checkVictory(state, scenario.victory);
-  const objectives = summarizeVictory(state, scenario.victory).filter(o => o.for === 'french');
+  const objectives = summarizeVictory(state, scenario.victory)
+    .filter(o => isOnPlayerTeam(o.for, playerSide));
 
   return (
     <div className="battle-screen min-h-full p-4 grid grid-cols-1 md:grid-cols-[1fr_22rem] gap-4">
@@ -192,7 +194,7 @@ function BattleScreen() {
         </div>
       </div>
       <aside>
-        <UnitPanel unit={selected} />
+        <UnitPanel unit={selected} playerSide={playerSide} />
         <UnitReference />
         <RulesQuickReference selectedUnit={selected} allUnits={state.units} />
         <AttackPreview

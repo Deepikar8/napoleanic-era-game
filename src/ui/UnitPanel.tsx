@@ -1,4 +1,5 @@
-import type { Unit, Morale } from '../engine/types';
+import type { Unit, Morale, Side } from '../engine/types';
+import { isOnPlayerTeam } from '../engine/sides';
 import { Panel } from './shared';
 
 const TYPE_LABEL: Record<Unit['type'], string> = {
@@ -19,16 +20,16 @@ const MORALE_LABEL: Record<Morale, string> = {
 
 // Your own units' morale is always visible — you're the commander, you picked
 // them. Only the ENEMY's morale is hidden until first contact.
-const isOwnSide = (unit: Unit): boolean => unit.side === 'french';
+const isOwnSide = (unit: Unit, playerSide: Side): boolean => isOnPlayerTeam(unit.side, playerSide);
 
-const moraleDisplay = (unit: Unit): string => {
-  const reveal = unit.moraleRevealed || isOwnSide(unit);
+const moraleDisplay = (unit: Unit, playerSide: Side): string => {
+  const reveal = unit.moraleRevealed || isOwnSide(unit, playerSide);
   return reveal
     ? `${'★'.repeat(unit.morale)} ${MORALE_LABEL[unit.morale]}`
     : '? (revealed when first attacked)';
 };
 
-export function UnitPanel({ unit }: { unit: Unit | null }) {
+export function UnitPanel({ unit, playerSide = 'french' }: { unit: Unit | null; playerSide?: Side }) {
   if (!unit) return <Panel title="No unit selected"><p className="text-sm opacity-60">Tap a unit on the board.</p></Panel>;
   return (
     <Panel title="Selected unit">
@@ -38,7 +39,7 @@ export function UnitPanel({ unit }: { unit: Unit | null }) {
         <Row label="Side" value={unit.side} />
         <Row label="Formation" value={unit.formation} />
         <Row label="Strength" value={`${unit.strength} / 4`} />
-        <Row label="Morale" value={moraleDisplay(unit)} />
+        <Row label="Morale" value={moraleDisplay(unit, playerSide)} />
         <Row label="Cohesion" value={`${(unit.cohesion ?? 0) >= 0 ? '+' : ''}${unit.cohesion ?? 0}`} />
       </div>
       <p className="mt-2 text-xs italic opacity-70">

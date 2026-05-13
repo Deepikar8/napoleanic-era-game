@@ -6,6 +6,7 @@ import { replayUpTo, eventUnitIds } from '../engine/replay';
 import { applyScenarioTriggers } from '../engine/triggers';
 import { localStorageBackend, newRunId } from './save';
 import { allScenarios, getCampaignScenarios } from '../scenarios';
+import { isPlayerTurn } from '../engine/sides';
 import {
   playTurnDrum, playFifeFlourish, setMuted as soundSetMuted,
   playAttackThump, playEliminationGong, playRetreatSlide,
@@ -213,7 +214,7 @@ export const useGame = create<Store>((set, get) => ({
 
     const after = get();
     if (after.scenario && after.state &&
-        after.state.currentSide !== 'french' &&
+        !isPlayerTurn(after.state.currentSide, after.scenario.playerSide) &&
         after.solo &&
         after.screen === 'battle') {
 
@@ -245,8 +246,9 @@ export const useGame = create<Store>((set, get) => ({
         return;
       }
 
-      const stoodFirmMsg = 'Coalition stood firm — no movement this turn.';
-      const initialMsg = aiActed ? 'Coalition is moving…' : stoodFirmMsg;
+      const aiSideLabel = after.state.currentSide === 'french' ? 'French' : 'Coalition';
+      const stoodFirmMsg = `${aiSideLabel} stood firm — no movement this turn.`;
+      const initialMsg = aiActed ? `${aiSideLabel} is moving…` : stoodFirmMsg;
       set({ isAnimating: true, animatingHighlightIds: [], animatingMessage: initialMsg });
 
       let i = startIdx;
@@ -281,7 +283,7 @@ export const useGame = create<Store>((set, get) => ({
         set({
           state: intermediate,
           animatingHighlightIds: eventUnitIds(ev),
-          animatingMessage: caption ?? (aiActed ? 'Coalition is moving…' : stoodFirmMsg),
+          animatingMessage: caption ?? (aiActed ? `${aiSideLabel} is moving…` : stoodFirmMsg),
         });
         playEventSound(ev, intermediate.units);
 

@@ -134,4 +134,10 @@ describe('save backend', () => {
     const loaded = localStorageBackend.load('legacy-cohesion');
     expect(loaded?.state.units[0].cohesion).toBe(0);
   });
+
+  it('loads older states without scenario playerSide data', () => {
+    const state = sampleState();
+    expect(state.currentSide).toBe('french');
+    expect(isValidGameState(state)).toBe(true);
+  });
 });
