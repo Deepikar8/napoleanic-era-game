@@ -8,6 +8,7 @@ import { austerlitz } from './07-austerlitz';
 import { bailen } from './08-bailen';
 import { somosierra } from './09-somosierra';
 import { talavera } from './10-talavera';
+import { vimeiro } from './11-vimeiro';
 import type { Campaign, CampaignId, Scenario } from '../engine/types';
 
 export const ulmAusterlitzScenarios: Scenario[] = [
@@ -15,7 +16,7 @@ export const ulmAusterlitzScenarios: Scenario[] = [
 ].map(s => ({ ...s, campaignId: 'ulm-austerlitz-1805' }));
 
 export const peninsularWarScenarios: Scenario[] = [
-  bailen, somosierra, talavera,
+  bailen, somosierra, talavera, vimeiro,
 ];
 
 export const campaigns: Campaign[] = [

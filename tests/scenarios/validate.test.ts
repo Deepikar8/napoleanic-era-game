@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { allScenarios } from '../../src/scenarios';
 import { inBounds } from '../../src/engine/grid';
+import { COALITION } from '../../src/engine/sides';
 
 describe('scenario validation', () => {
   for (const s of allScenarios) {
@@ -44,11 +45,15 @@ describe('scenario validation', () => {
         }
       });
 
-      it('has at least one victory condition for each side present', () => {
+      it('has at least one victory condition for each team present', () => {
         const sides = new Set(s.units.map(u => u.side));
         const condFors = new Set(s.victory.map(v => v.for));
         for (const side of sides) {
-          expect(condFors.has(side)).toBe(true);
+          if (side === 'french') {
+            expect(condFors.has('french')).toBe(true);
+          } else {
+            expect(COALITION.some(coalitionSide => condFors.has(coalitionSide))).toBe(true);
+          }
         }
       });
     });
