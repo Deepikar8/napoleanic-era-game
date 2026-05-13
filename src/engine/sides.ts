@@ -24,3 +24,11 @@ export const isOnActiveSide = (side: Side, currentSide: Side): boolean =>
 /** Convenience: can this unit act this turn (ignoring per-unit hasMoved/hasActed)? */
 export const canActUnit = (u: Unit, currentSide: Side): boolean =>
   isOnActiveSide(u.side, currentSide);
+
+export const playerSideForScenario = (playerSide?: Side): Side => playerSide ?? 'french';
+
+export const isOnPlayerTeam = (side: Side, playerSide?: Side): boolean =>
+  isOnActiveSide(side, playerSideForScenario(playerSide));
+
+export const isPlayerTurn = (currentSide: Side, playerSide?: Side): boolean =>
+  isOnActiveSide(currentSide, playerSideForScenario(playerSide));

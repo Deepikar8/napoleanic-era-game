@@ -19,6 +19,24 @@ const trivialScenario: Scenario = {
   ai: { generalRule: 'defensive', triggers: [] },
 };
 
+const basePlayerSideScenario = (overrides: Partial<Scenario> = {}): Scenario => ({
+  id: 'player-side-test',
+  title: 'Player Side Test',
+  briefingMd: 'test',
+  grid: { width: 4, height: 4 },
+  tiles: [],
+  units: [
+    u({ id: 'fr-line', side: 'french', position: { x: 0, y: 1 } }),
+    u({ id: 'br-line', side: 'british', position: { x: 3, y: 1 }, facing: 'W' }),
+  ],
+  victory: [
+    { for: 'french', kind: 'survive-turns', args: { turns: 3 } },
+    { for: 'british', kind: 'survive-turns', args: { turns: 3 } },
+  ],
+  ai: { generalRule: 'defensive', triggers: [] },
+  ...overrides,
+});
+
 describe('turn manager', () => {
   it('beginBattle initialises GameState from scenario', () => {
     const state = beginBattle(trivialScenario);
@@ -26,6 +44,16 @@ describe('turn manager', () => {
     expect(state.turn).toBe(1);
     expect(state.currentSide).toBe('french');
     expect(state.phase).toBe('orders');
+  });
+
+  it('defaults new battles to French player side', () => {
+    const state = beginBattle(basePlayerSideScenario());
+    expect(state.currentSide).toBe('french');
+  });
+
+  it('starts on coalition side when scenario playerSide is British', () => {
+    const state = beginBattle(basePlayerSideScenario({ playerSide: 'british' }));
+    expect(state.currentSide).toBe('british');
   });
 
   it('moveUnit moves and emits unit-moved event', () => {

@@ -110,6 +110,7 @@ export interface ScenarioPatch {
 export interface Scenario {
   id: string;
   campaignId?: CampaignId;
+  playerSide?: Side;             // defaults to french; coalition sides act as one player team
   title: string;
   briefingMd: string;          // filename (without .md) under src/dispatches
   grid: { width: number; height: number };
