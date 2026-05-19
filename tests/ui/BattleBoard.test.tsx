@@ -131,4 +131,59 @@ describe('BattleBoard', () => {
     expect(screen.getByLabelText('Cohesion +1')).toBeInTheDocument();
     expect(screen.getByLabelText('Cohesion -1')).toBeInTheDocument();
   });
+
+  it('shows morale stars for the configured player team, not always France', () => {
+    const britishPlayerScenario: Scenario = {
+      ...scenario,
+      playerSide: 'british',
+      grid: { width: 4, height: 4 },
+      tiles: [],
+      units: [
+        {
+          id: 'fr-line',
+          side: 'french',
+          type: 'line-infantry',
+          position: { x: 0, y: 1 },
+          facing: 'E',
+          formation: 'line',
+          strength: 4,
+          morale: 3,
+        },
+        {
+          id: 'br-line',
+          side: 'british',
+          type: 'line-infantry',
+          position: { x: 3, y: 1 },
+          facing: 'W',
+          formation: 'line',
+          strength: 4,
+          morale: 2,
+        },
+      ],
+    };
+    const britishPlayerState: GameState = {
+      ...state,
+      campaignId: 'peninsular-war-1808',
+      scenarioId: britishPlayerScenario.id,
+      units: britishPlayerScenario.units,
+      currentSide: 'british',
+    };
+
+    render(
+      <BattleBoard
+        scenario={britishPlayerScenario}
+        state={britishPlayerState}
+        selectedUnitId={null}
+        hoveredEnemyId={null}
+        showDetails
+        onSelectUnit={vi.fn()}
+        onMoveTo={vi.fn()}
+        onAttack={vi.fn()}
+        onHoverEnemy={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('★★')).toBeInTheDocument();
+    expect(screen.queryByText('★★★')).not.toBeInTheDocument();
+  });
 });

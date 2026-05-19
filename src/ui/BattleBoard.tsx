@@ -3,7 +3,7 @@ import type { GameState, Pos, Scenario, TerrainKind, Unit, VictoryCondition } fr
 import { posEq, posKey } from '../engine/types';
 import { legalMoves } from '../engine/movement';
 import { canAttackUnit } from '../engine/attack-range';
-import { isOnActiveSide, sameTeam } from '../engine/sides';
+import { isOnActiveSide, isOnPlayerTeam, sameTeam } from '../engine/sides';
 import { unitSilhouetteId } from '../art/unit-silhouettes';
 import { getCampaignBoardSkin } from '../art/campaign-skins';
 import { getUnitRasterIcon, UNIT_COUNTER_ICON_LAYOUT } from '../art/unit-art';
@@ -230,6 +230,8 @@ export function BattleBoard(p: BattleBoardProps) {
   const enemySet = new Set(attackableEnemies.map(u => u.id));
 
   const objectives = frenchObjectiveTiles(state, scenario.victory);
+  const canSeeMorale = (unit: Unit): boolean =>
+    unit.moraleRevealed || isOnPlayerTeam(unit.side, scenario.playerSide);
 
   const terrainOverlay = (kind: TerrainKind, x: number, y: number) => {
     const ox = x * cellSize;
@@ -604,7 +606,7 @@ export function BattleBoard(p: BattleBoardProps) {
               {u.strength}
             </text>
             {/* Morale stars: dedicated top strip so they do not cover unit art. */}
-            {(u.moraleRevealed || u.side === 'french') && (
+            {canSeeMorale(u) && (
               <g pointerEvents="none">
                 <rect
                   x={3.5} y={2.3}
@@ -827,9 +829,9 @@ export function BattleBoard(p: BattleBoardProps) {
         const ty = placeAbove
           ? tooltipPos.y * cellSize - tipH - 4
           : tooltipPos.y * cellSize + cellSize + 4;
-        // Own (French) morale is always shown; enemy morale stays '?' until probed.
+        // Own-side morale is always shown; enemy morale stays '?' until probed.
         const moraleStr = occupant
-          ? ((occupant.moraleRevealed || occupant.side === 'french')
+          ? (canSeeMorale(occupant)
               ? '★'.repeat(occupant.morale) : '?')
           : '';
         return (
